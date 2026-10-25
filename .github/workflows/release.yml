@@ -1,0 +1,56 @@
+# Builds the .vsix on GitHub from the tagged commit and attaches it to the
+# release, together with a signed build provenance attestation. Nothing in
+# the release is produced on a developer machine.
+#
+# Anyone can verify a downloaded file against this workflow with:
+#   gh attestation verify library-shelves.vsix --owner andres-m-rodriguez
+
+name: Release
+
+on:
+  push:
+    tags:
+      - "v*"
+
+permissions:
+  contents: write
+  id-token: write
+  attestations: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out the tagged commit
+        uses: actions/checkout@v4
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install exact locked dependencies
+        run: npm ci
+
+      - name: Type check and option rules
+        run: npm run check
+
+      - name: Build and package
+        run: npm run package
+
+      - name: Record the checksum in the job log
+        run: sha256sum library-shelves.vsix
+
+      - name: Attest build provenance
+        uses: actions/attest-build-provenance@v2
+        with:
+          subject-path: library-shelves.vsix
+
+      - name: Attach the .vsix to the release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ github.ref_name }}
+        run: |
+          gh release view "$TAG" >/dev/null 2>&1 || gh release create "$TAG" --title "Library Shelves ${TAG#v}" --generate-notes
+          gh release upload "$TAG" library-shelves.vsix --clobber

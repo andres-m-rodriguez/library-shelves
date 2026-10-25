@@ -2,7 +2,7 @@
   "name": "library-shelves",
   "displayName": "Library Shelves",
   "description": "Markdown cards with their lessons, grouped by category, from a library.json.",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "publisher": "overlord",
   "license": "MIT",
   "repository": {
