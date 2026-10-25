@@ -1,0 +1,196 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "library.schema.json",
+  "title": "Library",
+  "description": "Each key is a markdown file, relative to this library.json. It may belong to a category and lists the lessons that belong to it. Comments and trailing commas are allowed.",
+  "type": "object",
+  "properties": {
+    "$schema": {
+      "type": "string",
+      "description": "Optional. The schema is applied automatically to any file named library.json."
+    },
+    "$categories": {
+      "type": "object",
+      "description": "Optional look of each category, keyed by the exact category name used on cards. Keeps category settings flat instead of nesting cards inside categories.",
+      "additionalProperties": {
+        "$ref": "#/definitions/category"
+      }
+    }
+  },
+  "additionalProperties": {
+    "$ref": "#/definitions/card"
+  },
+  "definitions": {
+    "color": {
+      "description": "Color of the row in the Library view. A name, or any VS Code theme color id such as charts.red.",
+      "oneOf": [
+        {
+          "type": "string",
+          "enum": [
+            "red",
+            "orange",
+            "yellow",
+            "green",
+            "blue",
+            "purple",
+            "gray"
+          ]
+        },
+        {
+          "type": "string",
+          "pattern": "^[a-zA-Z]+(\\.[a-zA-Z]+)+$",
+          "description": "A theme color id, for example charts.red or errorForeground."
+        }
+      ]
+    },
+    "card": {
+      "type": "object",
+      "description": "A markdown card: where it sits and which lessons belong to it.",
+      "additionalProperties": false,
+      "properties": {
+        "category": {
+          "type": "string",
+          "description": "Cards with the same category are shown together under a folder with this name."
+        },
+        "order": {
+          "type": "integer",
+          "description": "Position among the cards in the same category. Lower comes first. Cards without an order go after those with one, sorted by name.",
+          "minimum": 0
+        },
+        "title": {
+          "type": "string",
+          "description": "Shown next to the markdown name in the Library view."
+        },
+        "description": {
+          "type": "string",
+          "description": "One or two sentences about the card. Shown next to the name, after the title."
+        },
+        "color": {
+          "$ref": "#/definitions/color"
+        },
+        "icon": {
+          "type": "string",
+          "description": "Icon shown for this markdown in the Library view: an icon id from the active icon theme, or a codicon like $(book). Completion lists the theme's icons."
+        },
+        "lessons": {
+          "type": "array",
+          "description": "The files that belong to this markdown.",
+          "items": {
+            "$ref": "#/definitions/lesson"
+          }
+        }
+      },
+      "defaultSnippets": [
+        {
+          "label": "Card with lessons",
+          "body": {
+            "category": "${1:Things I learned this week}",
+            "lessons": [
+              {
+                "name": "${2:declare.cs}",
+                "order": "^1"
+              }
+            ]
+          }
+        }
+      ]
+    },
+    "lesson": {
+      "type": "object",
+      "description": "A file that belongs to the markdown, plus optional order and metadata.",
+      "required": [
+        "name"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "name": {
+          "type": "string",
+          "description": "The file, relative to library.json.",
+          "examples": [
+            "declare.cs"
+          ]
+        },
+        "order": {
+          "type": "integer",
+          "description": "Position under the markdown. Lower comes first. Lessons without an order go after those with one, sorted by name.",
+          "minimum": 0
+        },
+        "title": {
+          "type": "string",
+          "description": "Shown next to the file name in the Library view."
+        },
+        "description": {
+          "type": "string",
+          "description": "One or two sentences about what the file covers. Shown next to the file name, after the title."
+        },
+        "color": {
+          "$ref": "#/definitions/color"
+        },
+        "tags": {
+          "type": "array",
+          "description": "Free-form labels, for example topics or the day it was written.",
+          "items": {
+            "type": "string"
+          },
+          "uniqueItems": true
+        },
+        "date": {
+          "type": "string",
+          "description": "The day this file was written, as YYYY-MM-DD.",
+          "pattern": "^\\d{4}-\\d{2}-\\d{2}$"
+        }
+      },
+      "defaultSnippets": [
+        {
+          "label": "Lesson",
+          "body": {
+            "name": "${1:declare.cs}",
+            "order": "^${2:1}"
+          }
+        },
+        {
+          "label": "Lesson with metadata",
+          "body": {
+            "name": "${1:declare.cs}",
+            "order": "^${2:1}",
+            "title": "${3}",
+            "description": "${4}",
+            "color": "${5|red,orange,yellow,green,blue,purple,gray|}"
+          }
+        }
+      ]
+    },
+    "category": {
+      "type": "object",
+      "description": "How a category folder looks in the Library view.",
+      "additionalProperties": false,
+      "properties": {
+        "icon": {
+          "type": "string",
+          "description": "Icon for the category folder: an icon id from the active icon theme, or a codicon like $(folder-library). Completion lists the theme's icons."
+        },
+        "color": {
+          "$ref": "#/definitions/color"
+        },
+        "order": {
+          "type": "integer",
+          "description": "Position among categories. Lower comes first. Categories without an order go after those with one, sorted by name.",
+          "minimum": 0
+        },
+        "description": {
+          "type": "string",
+          "description": "Shown next to the category name."
+        }
+      },
+      "defaultSnippets": [
+        {
+          "label": "Category look",
+          "body": {
+            "icon": "${1:folder-public}",
+            "color": "${2|red,orange,yellow,green,blue,purple,gray|}"
+          }
+        }
+      ]
+    }
+  }
+}

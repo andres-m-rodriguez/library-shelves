@@ -1,0 +1,10 @@
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    "module": "CommonJS",
+    "strict": true,
+    "noEmit": true,
+    "types": ["vscode", "node"]
+  },
+  "include": ["src"]
+}
