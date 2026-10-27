@@ -3,11 +3,12 @@ import * as vscode from "vscode";
 import { type CardMeta, LIBRARY_FILE, type Node } from "../../contracts";
 import type { FeatureContext } from "../../extension";
 import { toRelative } from "../../library/files";
-import { map, some, type Option } from "../../option";
+import { map, option, orElse, some, type Option } from "../../option";
 import { parsers } from "../../parsers";
 import { EXCLUDE_GLOB } from "../../services";
 import { nextCardOrder } from "../shared/nodes";
 
+type Candidate = vscode.QuickPickItem & { uri: vscode.Uri };
 
 export async function addCard(ctx: FeatureContext, node: Option<Node>): Promise<void> {
    const category = ctx.selection.categoryClicked(node);
@@ -20,20 +21,26 @@ export async function addCard(ctx: FeatureContext, node: Option<Node>): Promise<
    if (!opened.some) {
       return;
    }
-   const cardKeys = [...parsers.libraryFile.cards(opened.value.data)].map(([key]) => key);
-   const taken = new Set(cardKeys.map((key) => path.resolve(folder, key).toLowerCase()));
-   const markdownFiles = new vscode.RelativePattern(vscode.Uri.file(folder), "**/*.{md,markdown}");
-   const found = await vscode.workspace.findFiles(markdownFiles, EXCLUDE_GLOB);
+   const cards = [...parsers.libraryFile.cards(opened.value.data)];
+   const taken = new Set([jsonUri.value.fsPath.toLowerCase(), ...cards.map(([key]) => path.resolve(folder, key).toLowerCase())]);
+   const lessonOwners = lessonOwnersOf(folder, cards);
+   const everyFile = new vscode.RelativePattern(vscode.Uri.file(folder), "**/*");
+   const found = await vscode.workspace.findFiles(everyFile, EXCLUDE_GLOB);
    const candidates = found
       .filter((uri) => !taken.has(uri.fsPath.toLowerCase()))
       .sort((a, b) => a.fsPath.localeCompare(b.fsPath, [], { numeric: true }));
    if (!candidates.length) {
-      ctx.dialogs.info(`Every markdown file next to ${LIBRARY_FILE} is already a card.`);
+      ctx.dialogs.info(`Every file next to ${LIBRARY_FILE} is already a card.`);
       return;
    }
+   const items: Candidate[] = candidates.map((uri) => {
+      const owner = option(lessonOwners.get(uri.fsPath.toLowerCase()));
+      const description = orElse(map(owner, (name) => `lesson in ${name}`), "");
+      return { label: toRelative(folder, uri.fsPath), description, uri };
+   });
    const picks = await ctx.dialogs.pickMany(
-      candidates.map((uri) => ({ label: toRelative(folder, uri.fsPath), uri })),
-      { placeHolder: category.some ? `Markdown files to add to ${category.value.name}` : "Markdown files to add as cards", matchOnDescription: true },
+      items,
+      { placeHolder: category.some ? `Files to add to ${category.value.name}` : "Files to add as cards", matchOnDescription: true },
    );
    if (!picks.some || !picks.value.length) {
       return;
@@ -48,4 +55,17 @@ export async function addCard(ctx: FeatureContext, node: Option<Node>): Promise<
          doc.set([toRelative(folder, pick.uri.fsPath)], meta);
       }
    });
+}
+
+function lessonOwnersOf(folder: string, cards: [string, CardMeta][]): Map<string, string> {
+   const owners = new Map<string, string>();
+   for (const [key, meta] of cards) {
+      const cardName = path.basename(key);
+      const lessons = orElse(option(meta.lessons), []);
+      for (const lesson of lessons) {
+         const lessonPath = path.resolve(folder, lesson.name).toLowerCase();
+         owners.set(lessonPath, cardName);
+      }
+   }
+   return owners;
 }

@@ -83,7 +83,7 @@ export async function readMapping(uri: vscode.Uri): Promise<LibraryFile> {
       return parsers.libraryFile.parse(doc.textOf()).value;
    } catch (error) {
       warn(error);
-      return { cards: {}, categories: {} };
+      return { cards: {}, categories: {}, fileTypes: {} };
    }
 }
 

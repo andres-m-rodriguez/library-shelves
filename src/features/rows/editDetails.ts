@@ -9,7 +9,7 @@ const CARD_FIELDS = ALL_FIELDS.filter((spec) => spec.field !== "tags" && spec.fi
 export async function editDetails(ctx: FeatureContext, node: Option<Node>): Promise<void> {
    const target = ctx.selection.first(node);
    if (!target.some) {
-      ctx.dialogs.info("Select a markdown card or a lesson in the Library view first.");
+      ctx.dialogs.info("Select a card or a lesson in the Library view first.");
       return;
    }
    switch (target.value.kind) {
@@ -18,7 +18,7 @@ export async function editDetails(ctx: FeatureContext, node: Option<Node>): Prom
       case "lesson":
          return editLesson(ctx, target.value.lesson);
       default:
-         ctx.dialogs.info("Select a markdown card or a lesson in the Library view first.");
+         ctx.dialogs.info("Select a card or a lesson in the Library view first.");
    }
 }
 

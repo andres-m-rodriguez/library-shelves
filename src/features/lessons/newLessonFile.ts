@@ -1,32 +1,18 @@
 import * as path from "path";
 import * as vscode from "vscode";
-import { type Card, LIBRARY_FILE, type Node } from "../../contracts";
+import { LIBRARY_FILE, type Node } from "../../contracts";
 import type { FeatureContext } from "../../extension";
 import { exists, toRelative } from "../../library/files";
-import { option, orElse, type Option } from "../../option";
+import { DEFAULT_LESSON_EXTENSION } from "../../library/running";
+import { option, type Option } from "../../option";
 import { parsers } from "../../parsers";
+import { headerFor } from "../shared/fileHeaders";
 import { appendLessons } from "./lessonWrites";
-
-const COMMENT_LEADERS: Record<string, [string, string]> = {
-   ".py": ["# ", ""],
-   ".sh": ["# ", ""],
-   ".ps1": ["# ", ""],
-   ".yaml": ["# ", ""],
-   ".yml": ["# ", ""],
-   ".toml": ["# ", ""],
-   ".rb": ["# ", ""],
-   ".md": ["<!-- ", " -->"],
-   ".html": ["<!-- ", " -->"],
-   ".xml": ["<!-- ", " -->"],
-   ".sql": ["-- ", ""],
-   ".lua": ["-- ", ""],
-   ".hs": ["-- ", ""],
-};
 
 export async function newLessonFile(ctx: FeatureContext, node: Option<Node>): Promise<void> {
    const card = ctx.selection.cardOf(node);
    if (!card.some) {
-      ctx.dialogs.info("Select a markdown card in the Library view first.");
+      ctx.dialogs.info("Select a card in the Library view first.");
       return;
    }
    const typed = await ctx.dialogs.input({
@@ -43,7 +29,7 @@ export async function newLessonFile(ctx: FeatureContext, node: Option<Node>): Pr
    if (!typed.some) {
       return;
    }
-   const fileName = parsers.fileName.withDefaultExtension(typed.value, ".cs");
+   const fileName = parsers.fileName.withDefaultExtension(typed.value, DEFAULT_LESSON_EXTENSION);
    const folder = path.dirname(card.value.jsonUri.fsPath);
    const filePath = path.join(folder, fileName);
    const uri = vscode.Uri.file(filePath);
@@ -56,7 +42,8 @@ export async function newLessonFile(ctx: FeatureContext, node: Option<Node>): Pr
          return;
       }
    } else {
-      const header = Buffer.from(headerFor(fileName, card.value), "utf8");
+      const headerText = headerFor(fileName, `part of ${card.value.name}`);
+      const header = Buffer.from(headerText, "utf8");
       await vscode.workspace.fs.writeFile(uri, header);
    }
 
@@ -66,9 +53,4 @@ export async function newLessonFile(ctx: FeatureContext, node: Option<Node>): Pr
       const document = await vscode.workspace.openTextDocument(uri);
       await vscode.window.showTextDocument(document, { preview: false });
    }
-}
-
-function headerFor(fileName: string, card: Card): string {
-   const [open, close] = orElse(option(COMMENT_LEADERS[path.extname(fileName).toLowerCase()]), ["// ", ""]);
-   return `${open}${fileName}: part of ${card.name}${close}\n\n`;
 }

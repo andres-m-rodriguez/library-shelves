@@ -6,14 +6,14 @@ import { plural } from "../../services";
 export async function removeCards(ctx: FeatureContext, node: Option<Node>): Promise<void> {
    const cards = ctx.selection.targetsOfKind(node, "card").map((n) => n.card);
    if (!cards.length) {
-      ctx.dialogs.info("Select one or more markdown cards in the Library view to remove them.");
+      ctx.dialogs.info("Select one or more cards in the Library view to remove them.");
       return;
    }
    const confirmed = await ctx.dialogs.confirm({
       question: `Remove ${plural(cards.length, "card")} from the library?`,
       action: "Remove",
       affected: cards.map((c) => c.name),
-      keeps: "The markdown files and their lesson files stay on disk.",
+      keeps: "The card files and their lesson files stay on disk.",
       changes: "Only the entries in library.json go away.",
    });
    if (!confirmed) {

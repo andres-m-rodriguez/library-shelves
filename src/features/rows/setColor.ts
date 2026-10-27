@@ -9,7 +9,7 @@ import { groupByJson, jsonUriOf, nodeColor, nodeLabel } from "../shared/nodes";
 export async function setColor(ctx: FeatureContext, node: Option<Node>): Promise<void> {
    const targets = ctx.selection.targetsOf(node).filter((n) => n.kind !== "day");
    if (!targets.length) {
-      ctx.dialogs.info("Right-click a category, markdown or lesson in the Library view to color it.");
+      ctx.dialogs.info("Right-click a category, card or lesson in the Library view to color it.");
       return;
    }
    const single = targets.length === 1 ? some(targets[0]) : none;

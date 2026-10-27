@@ -43,3 +43,4 @@ export type CardNode = Extract<Node, { kind: "card" }>;
 export type LessonNode = Extract<Node, { kind: "lesson" }>;
 
 export type ViewMode = "category" | "day" | "alphabetical";
+

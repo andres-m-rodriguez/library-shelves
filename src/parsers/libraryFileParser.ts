@@ -1,9 +1,11 @@
 import { parse as parseJsonc, printParseErrorCode, type ParseError } from "jsonc-parser";
 import {
    CATEGORIES_KEY,
+   FILE_TYPES_KEY,
    SCHEMA_KEY,
    type CardMeta,
    type CategoryMeta,
+   type FileTypeMeta,
    type LessonMeta,
    type LibraryFile,
    type ParseIssue,
@@ -20,7 +22,7 @@ export class LibraryFileParser {
          throw new Error(`${printParseErrorCode(first.error)} at line ${line}`);
       }
       if (!isPlainObject(parsed)) {
-         throw new Error("expected an object whose keys are markdown files");
+         throw new Error("expected an object whose keys are card files");
       }
       return parsed;
    }
@@ -30,7 +32,7 @@ export class LibraryFileParser {
    }
 
    fromRoot(root: Record<string, unknown>): ParseResult<LibraryFile> {
-      const value: LibraryFile = { cards: {}, categories: {} };
+      const value: LibraryFile = { cards: {}, categories: {}, fileTypes: {} };
       const issues: ParseIssue[] = [];
       for (const [key, raw] of Object.entries(root)) {
          if (key === SCHEMA_KEY) {
@@ -38,6 +40,10 @@ export class LibraryFileParser {
          }
          if (key === CATEGORIES_KEY) {
             this.readCategories(raw, value, issues);
+            continue;
+         }
+         if (key === FILE_TYPES_KEY) {
+            this.readFileTypes(raw, value, issues);
             continue;
          }
          if (this.isCardMeta(raw)) {
@@ -51,7 +57,7 @@ export class LibraryFileParser {
 
    *cards(root: Record<string, unknown>): IterableIterator<[string, CardMeta]> {
       for (const [key, raw] of Object.entries(root)) {
-         if (key !== SCHEMA_KEY && key !== CATEGORIES_KEY && this.isCardMeta(raw)) {
+         if (key !== SCHEMA_KEY && key !== CATEGORIES_KEY && key !== FILE_TYPES_KEY && this.isCardMeta(raw)) {
             yield [key, raw];
          }
       }
@@ -98,6 +104,38 @@ export class LibraryFileParser {
 
    isCategoryMeta(value: unknown): value is CategoryMeta {
       return isPlainObject(value);
+   }
+
+   isFileTypeMeta(value: unknown): value is FileTypeMeta {
+      return isPlainObject(value);
+   }
+
+   fileTypesOf(root: Record<string, unknown>): Record<string, FileTypeMeta> {
+      const block = root[FILE_TYPES_KEY];
+      const fileTypes: Record<string, FileTypeMeta> = {};
+      if (!isPlainObject(block)) {
+         return fileTypes;
+      }
+      for (const [extension, raw] of Object.entries(block)) {
+         if (this.isFileTypeMeta(raw)) {
+            fileTypes[extension] = raw;
+         }
+      }
+      return fileTypes;
+   }
+
+   private readFileTypes(raw: unknown, into: LibraryFile, issues: ParseIssue[]): void {
+      if (!isPlainObject(raw)) {
+         issues.push({ message: `${FILE_TYPES_KEY} must be an object keyed by file extension` });
+         return;
+      }
+      for (const [extension, meta] of Object.entries(raw)) {
+         if (this.isFileTypeMeta(meta)) {
+            into.fileTypes[extension] = meta;
+         } else {
+            issues.push({ message: `${FILE_TYPES_KEY}["${extension}"] must be an object` });
+         }
+      }
    }
 
    private readCategories(raw: unknown, into: LibraryFile, issues: ParseIssue[]): void {

@@ -2,7 +2,7 @@
   "name": "library-shelves",
   "displayName": "Library Shelves",
   "description": "Markdown cards with their lessons, grouped by category, from a library.json.",
-  "version": "0.0.2",
+  "version": "0.0.3",
   "publisher": "overlord",
   "license": "MIT",
   "repository": {
@@ -45,111 +45,151 @@
     "commands": [
       {
         "command": "library.refresh",
-        "title": "Library: Refresh",
+        "title": "Refresh",
+        "category": "Library",
         "icon": "$(refresh)"
       },
       {
         "command": "library.sortBy",
-        "title": "Library: Sort By...",
+        "title": "Sort By...",
+        "category": "Library",
         "icon": "$(list-ordered)"
       },
       {
         "command": "library.setIcon",
-        "title": "Library: Set Icon...",
+        "title": "Set Icon...",
+        "category": "Library",
         "icon": "$(symbol-color)"
       },
       {
         "command": "library.filter",
-        "title": "Library: Filter...",
+        "title": "Filter...",
+        "category": "Library",
         "icon": "$(filter)"
       },
       {
         "command": "library.newCategory",
-        "title": "Library: New Category...",
+        "title": "New Category...",
+        "category": "Library",
         "icon": "$(new-folder)"
       },
       {
         "command": "library.renameCategory",
-        "title": "Library: Rename Category...",
+        "title": "Rename Category...",
+        "category": "Library",
         "icon": "$(edit)"
       },
       {
+        "command": "library.newCard",
+        "title": "New Card...",
+        "category": "Library",
+        "icon": "$(add)"
+      },
+      {
         "command": "library.addCard",
-        "title": "Library: Add Card...",
+        "title": "Add Card...",
+        "category": "Library",
         "icon": "$(add)"
       },
       {
         "command": "library.newCardFile",
-        "title": "Library: New Card File...",
+        "title": "New Card File...",
+        "category": "Library",
         "icon": "$(new-file)"
       },
       {
         "command": "library.moveToCategory",
-        "title": "Library: Move to Category...",
+        "title": "Move to Category...",
+        "category": "Library",
         "icon": "$(folder-opened)"
       },
       {
         "command": "library.setColor",
-        "title": "Library: Set Color...",
+        "title": "Set Color...",
+        "category": "Library",
         "icon": "$(paintcan)"
       },
       {
+        "command": "library.configurePreview",
+        "title": "Configure Preview...",
+        "category": "Library",
+        "icon": "$(eye)"
+      },
+      {
+        "command": "library.configureRow",
+        "title": "Configure Row...",
+        "category": "Library",
+        "icon": "$(symbol-string)"
+      },
+      {
         "command": "library.addLesson",
-        "title": "Library: Add Lessons...",
+        "title": "Add Lessons...",
+        "category": "Library",
         "icon": "$(add)"
       },
       {
         "command": "library.newLessonFile",
-        "title": "Library: New Lesson File...",
+        "title": "New Lesson File...",
+        "category": "Library",
         "icon": "$(new-file)"
       },
       {
         "command": "library.editDetails",
-        "title": "Library: Edit Details...",
+        "title": "Edit Details...",
+        "category": "Library",
         "icon": "$(edit)"
       },
       {
         "command": "library.removeLesson",
-        "title": "Library: Remove Lesson from Library",
+        "title": "Remove Lesson from Library",
+        "category": "Library",
         "icon": "$(trash)"
       },
       {
         "command": "library.removeCard",
-        "title": "Library: Remove Card from Library",
+        "title": "Remove Card from Library",
+        "category": "Library",
         "icon": "$(trash)"
       },
       {
         "command": "library.removeCategory",
-        "title": "Library: Remove Category...",
+        "title": "Remove Category...",
+        "category": "Library",
         "icon": "$(trash)"
       },
       {
         "command": "library.clearLessons",
-        "title": "Library: Clear Lessons",
+        "title": "Clear Lessons",
+        "category": "Library",
         "icon": "$(clear-all)"
       },
       {
         "command": "library.remove",
-        "title": "Library: Remove Selection from Library",
+        "title": "Remove Selection from Library",
+        "category": "Library",
         "icon": "$(trash)"
       },
       {
         "command": "library.checkCategories",
-        "title": "Library: Check Categories",
+        "title": "Check Categories",
+        "category": "Library",
         "icon": "$(checklist)"
       },
       {
         "command": "library.runLesson",
-        "title": "Library: Run Lesson",
+        "title": "Run Lesson",
+        "category": "Library",
         "icon": "$(play)"
       },
       {
         "command": "library.hoverAction",
-        "title": "Library: Hover Action"
+        "title": "Hover Action",
+        "category": "Library"
       },
       {
         "command": "library.clearFilter",
-        "title": "Library: Clear Filter"
+        "title": "Clear Filter",
+        "category": "Library"
       }
     ],
     "keybindings": [
@@ -234,7 +274,7 @@
           "group": "navigation@3"
         },
         {
-          "command": "library.addCard",
+          "command": "library.newCard",
           "when": "view == libraryShelves",
           "group": "navigation@4"
         },
@@ -257,7 +297,7 @@
       "view/item/context": [
         {
           "command": "library.runLesson",
-          "when": "view == libraryShelves && viewItem == lesson",
+          "when": "view == libraryShelves && viewItem == lesson && resourceExtname == .cs",
           "group": "inline@0"
         },
         {
@@ -311,6 +351,16 @@
           "group": "2_edit@4"
         },
         {
+          "command": "library.configurePreview",
+          "when": "view == libraryShelves && (viewItem == category || viewItem == card || viewItem == lesson)",
+          "group": "2_edit@5"
+        },
+        {
+          "command": "library.configureRow",
+          "when": "view == libraryShelves && (viewItem == category || viewItem == card || viewItem == lesson)",
+          "group": "2_edit@6"
+        },
+        {
           "command": "library.clearLessons",
           "when": "view == libraryShelves && viewItem == card",
           "group": "3_remove@1"
@@ -346,6 +396,14 @@
         },
         {
           "command": "library.setColor",
+          "when": "false"
+        },
+        {
+          "command": "library.configurePreview",
+          "when": "false"
+        },
+        {
+          "command": "library.configureRow",
           "when": "false"
         },
         {
@@ -410,7 +468,8 @@
   },
   "scripts": {
     "build": "esbuild src/extension.ts --bundle --platform=node --format=cjs --main-fields=module,main --external:vscode --outfile=dist/extension.js",
-    "check": "tsc -p . && node scripts/check-options.mjs",
+    "check": "tsc -p . && node scripts/check-options.mjs && node scripts/run-tests.mjs",
+    "test": "node scripts/run-tests.mjs",
     "package": "npm run build && vsce package -o library-shelves.vsix"
   },
   "devDependencies": {

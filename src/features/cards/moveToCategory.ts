@@ -14,7 +14,7 @@ type Item = vscode.QuickPickItem & ({ role: "category"; name: Option<string> } |
 export async function moveToCategory(ctx: FeatureContext, node: Option<Node>): Promise<void> {
    const cards = ctx.selection.targetsOf(node).flatMap((n) => (n.kind === "card" ? [n.card] : []));
    if (!cards.length) {
-      ctx.dialogs.info("Select one or more markdown cards in the Library view to move them.");
+      ctx.dialogs.info("Select one or more cards in the Library view to move them.");
       return;
    }
    const single = cards.length === 1 ? some(cards[0]) : none;

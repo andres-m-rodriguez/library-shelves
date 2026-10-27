@@ -1,6 +1,6 @@
 import * as path from "path";
 import * as vscode from "vscode";
-import { CATEGORIES_KEY, LIBRARY_FILE, SCHEMA_KEY } from "../contracts";
+import { CATEGORIES_KEY, FILE_TYPES_KEY, LIBRARY_FILE, SCHEMA_KEY } from "../contracts";
 import { parsers } from "../parsers";
 import { JsonDocument, isCardMeta, type OpenedDocument } from "./jsonDocument";
 
@@ -51,7 +51,7 @@ export async function applyRenames(renames: readonly Rename[]): Promise<void> {
       let changed = false;
 
       for (const [key, value] of Object.entries(data)) {
-         if (key === SCHEMA_KEY || key === CATEGORIES_KEY || !isCardMeta(value)) {
+         if (key === SCHEMA_KEY || key === CATEGORIES_KEY || key === FILE_TYPES_KEY || !isCardMeta(value)) {
             continue;
          }
          value.lessons?.forEach((lesson, i) => {

@@ -46,7 +46,7 @@ export class Library {
    async find(): Promise<Option<vscode.Uri>> {
       const found = await vscode.workspace.findFiles(`**/${LIBRARY_FILE}`, EXCLUDE_GLOB);
       if (found.length === 0) {
-         void this.dialogs.warn(`No ${LIBRARY_FILE} in the workspace. Create one next to your markdown files first.`);
+         void this.dialogs.warn(`No ${LIBRARY_FILE} in the workspace. Create one next to your card files first.`);
          return none;
       }
       if (found.length === 1) {

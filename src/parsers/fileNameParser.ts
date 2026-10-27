@@ -24,11 +24,6 @@ export class FileNameParser {
       return path.extname(trimmed) ? trimmed : `${trimmed}${extension}`;
    }
 
-   asMarkdown(text: string): string {
-      const trimmed = text.trim();
-      return this.isMarkdown(trimmed) ? trimmed : `${trimmed}.md`;
-   }
-
    toRelative(folder: string, absolute: string): string {
       return path.relative(folder, absolute).split(path.sep).join("/");
    }

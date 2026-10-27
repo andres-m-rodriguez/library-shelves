@@ -30,7 +30,7 @@ export class SchemaProvider implements vscode.TextDocumentContentProvider {
       const catalog = this.icons();
       const themeNote = catalog.themeId ? `Icons from the active icon theme (${catalog.themeId}).` : "No icon theme is active.";
       schema.definitions.icon = {
-         description: `Icon shown for this markdown in the Library view. ${themeNote} Or a codicon like $(book).`,
+         description: `Icon shown for this card in the Library view. ${themeNote} Or a codicon like $(book).`,
          oneOf: [
             { type: "string", enum: catalog.ids },
             { type: "string", pattern: "^\\$\\([a-z0-9-]+\\)$", description: "A built-in codicon, written as $(name)." },

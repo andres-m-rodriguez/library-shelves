@@ -2,7 +2,7 @@
   "$schema": "http://json-schema.org/draft-07/schema#",
   "$id": "library.schema.json",
   "title": "Library",
-  "description": "Each key is a markdown file, relative to this library.json. It may belong to a category and lists the lessons that belong to it. Comments and trailing commas are allowed.",
+  "description": "Each key is a file, relative to this library.json. Any file type can be a card. It may belong to a category and lists the lessons that belong to it. Comments and trailing commas are allowed.",
   "type": "object",
   "properties": {
     "$schema": {
@@ -14,6 +14,13 @@
       "description": "Optional look of each category, keyed by the exact category name used on cards. Keeps category settings flat instead of nesting cards inside categories.",
       "additionalProperties": {
         "$ref": "#/definitions/category"
+      }
+    },
+    "$fileTypes": {
+      "type": "object",
+      "description": "Optional settings for every file with a given extension, keyed by extension such as .cs or .md. A preview here applies to all lessons and cards of that type unless a category, card or lesson sets its own.",
+      "additionalProperties": {
+        "$ref": "#/definitions/fileType"
       }
     }
   },
@@ -45,7 +52,7 @@
     },
     "card": {
       "type": "object",
-      "description": "A markdown card: where it sits and which lessons belong to it.",
+      "description": "A card, any file next to library.json: where it sits and which lessons belong to it.",
       "additionalProperties": false,
       "properties": {
         "category": {
@@ -59,7 +66,7 @@
         },
         "title": {
           "type": "string",
-          "description": "Shown next to the markdown name in the Library view."
+          "description": "Shown next to the card name in the Library view."
         },
         "description": {
           "type": "string",
@@ -70,14 +77,20 @@
         },
         "icon": {
           "type": "string",
-          "description": "Icon shown for this markdown in the Library view: an icon id from the active icon theme, or a codicon like $(book). Completion lists the theme's icons."
+          "description": "Icon shown for this card in the Library view: an icon id from the active icon theme, or a codicon like $(book). Completion lists the theme's icons."
         },
         "lessons": {
           "type": "array",
-          "description": "The files that belong to this markdown.",
+          "description": "The files that belong to this card.",
           "items": {
             "$ref": "#/definitions/lesson"
           }
+        },
+        "preview": {
+          "$ref": "#/definitions/preview"
+        },
+        "row": {
+          "$ref": "#/definitions/row"
         }
       },
       "defaultSnippets": [
@@ -97,7 +110,7 @@
     },
     "lesson": {
       "type": "object",
-      "description": "A file that belongs to the markdown, plus optional order and metadata.",
+      "description": "A file that belongs to the card, plus optional order and metadata.",
       "required": [
         "name"
       ],
@@ -112,7 +125,7 @@
         },
         "order": {
           "type": "integer",
-          "description": "Position under the markdown. Lower comes first. Lessons without an order go after those with one, sorted by name.",
+          "description": "Position under the card. Lower comes first. Lessons without an order go after those with one, sorted by name.",
           "minimum": 0
         },
         "title": {
@@ -138,6 +151,12 @@
           "type": "string",
           "description": "The day this file was written, as YYYY-MM-DD.",
           "pattern": "^\\d{4}-\\d{2}-\\d{2}$"
+        },
+        "preview": {
+          "$ref": "#/definitions/preview"
+        },
+        "row": {
+          "$ref": "#/definitions/row"
         }
       },
       "defaultSnippets": [
@@ -180,6 +199,12 @@
         "description": {
           "type": "string",
           "description": "Shown next to the category name."
+        },
+        "preview": {
+          "$ref": "#/definitions/preview"
+        },
+        "row": {
+          "$ref": "#/definitions/row"
         }
       },
       "defaultSnippets": [
@@ -188,6 +213,159 @@
           "body": {
             "icon": "${1:folder-public}",
             "color": "${2|red,orange,yellow,green,blue,purple,gray|}"
+          }
+        }
+      ]
+    },
+    "previewAction": {
+      "type": "string",
+      "description": "A quick action link at the bottom of the hover.",
+      "enum": [
+        "run",
+        "open",
+        "editDetails",
+        "openCard",
+        "addLesson",
+        "addCard",
+        "newCardFile",
+        "rename",
+        "moveToCategory",
+        "setIcon",
+        "setColor",
+        "configurePreview"
+      ]
+    },
+    "preview": {
+      "description": "What the hover shows. true shows everything, false hides the hover. An object configures the parts: anything left out is inherited from the card, then the category, then the file type.",
+      "oneOf": [
+        {
+          "type": "boolean"
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "summary": {
+              "type": "boolean",
+              "description": "The block at the top with the name, title, category, tags and date."
+            },
+            "code": {
+              "type": "boolean",
+              "description": "The excerpt with the first lines of the file."
+            },
+            "actions": {
+              "type": "array",
+              "description": "Which quick action links to show. An empty list hides them all.",
+              "items": {
+                "$ref": "#/definitions/previewAction"
+              },
+              "uniqueItems": true
+            }
+          }
+        }
+      ]
+    },
+    "fileType": {
+      "type": "object",
+      "description": "Settings shared by every file with this extension.",
+      "additionalProperties": false,
+      "properties": {
+        "preview": {
+          "$ref": "#/definitions/preview"
+        },
+        "row": {
+          "$ref": "#/definitions/row"
+        }
+      },
+      "defaultSnippets": [
+        {
+          "label": "Hide code, keep Run, Open and Edit Details",
+          "body": {
+            "preview": {
+              "code": false,
+              "actions": [
+                "run",
+                "open",
+                "editDetails"
+              ]
+            }
+          }
+        }
+      ]
+    },
+    "rowPart": {
+      "type": "string",
+      "enum": [
+        "fileName",
+        "title",
+        "date",
+        "description",
+        "tags"
+      ],
+      "description": "A piece of information shown next to the row label."
+    },
+    "dateFormat": {
+      "type": "string",
+      "description": "How a lesson date is written in the row. 'smart' shows Today, Yesterday, the weekday for the last week, then the full date. Otherwise a pattern with the tokens YYYY, YY, MMMM, MMM, MM, M, DD, D, dddd, ddd, for example MM/DD or MMM D, YYYY.",
+      "anyOf": [
+        {
+          "enum": [
+            "smart",
+            "YYYY-MM-DD",
+            "MM/DD",
+            "M/D",
+            "DD/MM",
+            "MM/DD/YYYY",
+            "DD/MM/YYYY",
+            "DD.MM.YYYY",
+            "MMM D",
+            "D MMM",
+            "MMM D, YYYY",
+            "ddd, MMM D",
+            "dddd"
+          ]
+        },
+        {
+          "type": "string",
+          "minLength": 1
+        }
+      ]
+    },
+    "row": {
+      "type": "object",
+      "description": "How the row looks in the Library view. Anything left out is inherited from the card, then the category, then the file type.",
+      "additionalProperties": false,
+      "properties": {
+        "label": {
+          "type": "string",
+          "enum": [
+            "fileName",
+            "title"
+          ],
+          "description": "What the row is called: the file name, or the title when one is set."
+        },
+        "parts": {
+          "type": "array",
+          "description": "What shows next to the label, in this order. A part that equals the label is skipped.",
+          "items": {
+            "$ref": "#/definitions/rowPart"
+          },
+          "uniqueItems": true
+        },
+        "date": {
+          "$ref": "#/definitions/dateFormat"
+        }
+      },
+      "defaultSnippets": [
+        {
+          "label": "Title with the date next to it",
+          "body": {
+            "label": "title",
+            "parts": [
+              "date",
+              "description"
+            ],
+            "date": "MM/DD"
           }
         }
       ]

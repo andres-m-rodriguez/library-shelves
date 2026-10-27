@@ -13,4 +13,5 @@ export type HoverAction =
    | "rename"
    | "moveToCategory"
    | "setIcon"
-   | "setColor";
+   | "setColor"
+   | "configurePreview";

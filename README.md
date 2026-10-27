@@ -1,6 +1,6 @@
 # Library Shelves
 
-A VS Code view for markdown notes and the code files that go with them. Each note is a card, each file is a lesson, and cards sit in categories.
+A VS Code view for your notes and the code files that go with them. Each note is a card, each file is a lesson, and cards sit in categories. A card can be any file type; markdown is the natural default.
 
 Install: download the `.vsix` from [Releases](https://github.com/andres-m-rodriguez/library-shelves/releases) and run `code --install-extension library-shelves.vsix`. See [Verifying the download](#verifying-the-download) if you want to check the file before installing it.
 
@@ -32,13 +32,77 @@ A schema is registered for every `library.json`, so you get completion, hover he
 ## Using the view
 
 - Click a row to open the file. Hover for a detail card with the first lines of the file and quick actions.
+- The + button in the title bar adds a card: Create file makes a new file next to `library.json` (a bare name gets `.md`) and Add existing lists files that are already there.
 - Right-click a category, card or lesson for its commands: add, rename, set icon or color, edit details, move, remove. Delete removes the selection, F2 renames, Insert adds lessons.
 - Drag to reorder lessons within a card or cards within a category. Drag onto a card or category to move. Drag files in from the Explorer to add them.
 - Sort by category, by day written, or alphabetically with the list button in the title bar.
+- Rows show the file name by default, with the title and description next to it. See [Rows](#rows) to change what a row shows.
 - Filter with the search button. Type to narrow the view as you go, or pick a color, tag or category from the list. Active terms show as rows you can remove one by one. The view subtitle shows what is active.
 - Renaming or moving a listed file inside VS Code updates `library.json`.
 
 Nothing is ever deleted from disk. Removing something only drops its entry.
+
+## Preview
+
+Hovering a row shows a preview with three parts: a summary (title, description, card, category, tags, date, color, order), an excerpt (the first lines of a lesson, the quoted start of a card, or the card names of a category) and the quick action links. Choose which parts appear with a `preview` entry on a lesson, a card or a category in `library.json`, or for every file with a given extension under `$fileTypes`:
+
+```json
+{
+  "$fileTypes": {
+    ".cs": { "preview": { "code": false } }
+  },
+  "$categories": {
+    "Basics": { "preview": false }
+  },
+  "variables.md": {
+    "category": "Basics",
+    "preview": true,
+    "lessons": [
+      { "name": "declare.cs", "preview": { "summary": true, "code": false, "actions": ["run", "open", "editDetails"] } }
+    ]
+  }
+}
+```
+
+`true` shows everything and `false` hides the hover entirely. The object form takes `summary`, `code` and `actions`, where `actions` lists the links to keep. Anything left out is inherited from the next level up, so a lesson overrides its card, the card overrides its category, and the category overrides the file type. Run "Configure Preview..." from a row's context menu, or click the Preview link in the hover, to edit these settings without opening the file.
+
+## Rows
+
+A row shows the file name as its label, with the title and description next to it. A `row` entry on a lesson, a card or a category, or under `$fileTypes` for every file with a given extension, changes that. It takes `label` (`fileName` or `title`), `parts` (the list shown next to the label, in order, from `fileName`, `title`, `date`, `description` and `tags`) and `date` (a format for the `date` part):
+
+```json
+{
+  "$fileTypes": {
+    ".cs": { "row": { "parts": ["title", "date"] } }
+  },
+  "variables.md": {
+    "row": { "label": "title", "parts": ["date", "description"], "date": "MM/DD" },
+    "lessons": [{ "name": "declare.cs", "title": "Declaring with a type" }]
+  }
+}
+```
+
+A part that has no value is skipped, as is the part already shown as the label. When `label` is `title` but the lesson or card has no title, the file name is shown instead. The `date` and `tags` parts apply to lessons; cards ignore them. These are the date formats, with the result for 2026-10-19:
+
+| Format | Example |
+| --- | --- |
+| `smart` | Today, Yesterday, the weekday for the last week, then Mon, Oct 19, 2026 |
+| `YYYY-MM-DD` | 2026-10-19 |
+| `MM/DD` | 10/19 |
+| `M/D` | 10/19 |
+| `DD/MM` | 19/10 |
+| `MM/DD/YYYY` | 10/19/2026 |
+| `DD/MM/YYYY` | 19/10/2026 |
+| `DD.MM.YYYY` | 19.10.2026 |
+| `MMM D` | Oct 19 |
+| `D MMM` | 19 Oct |
+| `MMM D, YYYY` | Oct 19, 2026 |
+| `ddd, MMM D` | Mon, Oct 19 |
+| `dddd` | Monday |
+
+Any other string is a custom pattern built from the tokens `YYYY`, `YY`, `MMMM`, `MMM`, `MM`, `M`, `DD`, `D`, `dddd` and `ddd`. Every `Y`, `M`, `D` and `d` in the pattern is read as a token, so keep other letters out of it.
+
+Run "Configure Row..." from a row's context menu to edit all of this without opening the file. It offers the same scopes as the preview: this lesson, all files of its type, the card, or the category. Anything left out is inherited the same way, so a lesson overrides its card, the card overrides its category, and the category overrides the file type.
 
 ## Verifying the download
 

@@ -1,5 +1,5 @@
 import type * as vscode from "vscode";
-import { CATEGORIES_KEY, SCHEMA_KEY, type Card, type Category, type Lesson, type LessonMeta } from "../contracts";
+import { CATEGORIES_KEY, FILE_TYPES_KEY, SCHEMA_KEY, type Card, type Category, type Lesson, type LessonMeta } from "../contracts";
 import { isCardMeta, isCategoryMeta, openForEdit } from "./jsonDocument";
 
 export async function writeLessonOrder(jsonUri: vscode.Uri, cardKey: string, orderedNames: string[]): Promise<void> {
@@ -12,7 +12,7 @@ export async function writeLessonOrder(jsonUri: vscode.Uri, cardKey: string, ord
    const pool = new Map<string, LessonMeta>();
 
    for (const [key, value] of Object.entries(data)) {
-      if (key === SCHEMA_KEY || key === CATEGORIES_KEY || !isCardMeta(value) || !value.lessons) {
+      if (key === SCHEMA_KEY || key === CATEGORIES_KEY || key === FILE_TYPES_KEY || !isCardMeta(value) || !value.lessons) {
          continue;
       }
       for (const lesson of value.lessons) {

@@ -2,6 +2,7 @@ import * as path from "path";
 import * as vscode from "vscode";
 import type { Node } from "../../contracts";
 import type { FeatureContext } from "../../extension";
+import { isRunnable } from "../../library/running";
 import { none, option, orElse, some, type Option } from "../../option";
 
 const TERMINAL_NAME = "Library";
@@ -22,6 +23,10 @@ export function runLesson(ctx: FeatureContext, target: Option<Node | vscode.Uri>
    const uri = uriOf(target);
    if (!uri.some) {
       ctx.dialogs.info("Open or select a lesson file to run.");
+      return;
+   }
+   if (!isRunnable(uri.value.fsPath)) {
+      ctx.dialogs.info("Only .cs lessons can be run for now.");
       return;
    }
    const template = orElse(option(vscode.workspace.getConfiguration("library").get<string>("runCommand")), DEFAULT_COMMAND);

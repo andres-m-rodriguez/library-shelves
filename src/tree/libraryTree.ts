@@ -9,16 +9,24 @@ import {
    type CategoryMeta,
    type Day,
    type DragRef,
+   type FileTypeMeta,
    type HoverRef,
    type IconCatalog,
    type Lesson,
    type Node,
+   type PreviewConfig,
+   type PreviewValue,
+   type RowConfig,
+   type RowPart,
+   type RowSetting,
    type ViewMode,
 } from "../contracts";
 import { dayKey, dayLabel, longDate } from "../dates";
 import { exists, isDirectory, statOrUndefined, toRelative } from "../library/files";
 import { EMPTY_CATALOG } from "../library/icons";
 import { readMapping } from "../library/jsonDocument";
+import { fileTypeMeta, resolvePreview } from "../library/preview";
+import { formatDay, resolveRow } from "../library/rows";
 import { writeCardOrder, writeCategoryOrder, writeLessonDate, writeLessonOrder } from "../library/writes";
 import { parsers } from "../parsers";
 import { HoverCards } from "./hoverCards";
@@ -29,6 +37,16 @@ export const LIBRARY_SCHEME = "library";
 type CategoryRef = Extract<DragRef, { kind: "category" }>;
 type CardRef = Extract<DragRef, { kind: "card" }>;
 type LessonRef = Extract<DragRef, { kind: "lesson" }>;
+type RowNode = Extract<Node, { kind: "card" | "lesson" }>;
+
+interface LayerMeta {
+   preview?: PreviewValue;
+   row?: RowSetting;
+}
+
+interface RowMeta {
+   title?: string;
+}
 
 interface Ordered {
    uri: vscode.Uri;
@@ -65,6 +83,7 @@ export class LibraryTree
 
    private readonly decorated = new Map<string, string | undefined>();
    private readonly hoverCards = new HoverCards();
+   fileTypes = new Map<string, Record<string, FileTypeMeta>>();
 
    refresh(): void {
       this.changed.fire(undefined);
@@ -84,10 +103,12 @@ export class LibraryTree
       const cards: Card[] = [];
       const categoryMeta = new Map<string, KnownCategory>();
       const jsonFiles = await vscode.workspace.findFiles(`**/${LIBRARY_FILE}`, "**/node_modules/**");
+      this.fileTypes.clear();
 
       for (const jsonUri of jsonFiles) {
          const folder = path.dirname(jsonUri.fsPath);
          const mapping = await readMapping(jsonUri);
+         this.fileTypes.set(jsonUri.fsPath, mapping.fileTypes);
          for (const [name, meta] of Object.entries(mapping.categories)) {
             categoryMeta.set(name.trim().toLowerCase(), { meta, jsonUri, written: name.trim() });
          }
@@ -223,13 +244,14 @@ export class LibraryTree
             const resource = card.uri.with({ scheme: LIBRARY_SCHEME });
             const item = new vscode.TreeItem(resource, vscode.TreeItemCollapsibleState.Expanded);
             item.iconPath = vscode.ThemeIcon.File;
-            item.label = card.name;
+            const row = this.rowFor(node);
+            item.label = titleLabel(row, card.meta) ?? card.name;
             item.id = nodeId(node);
             item.command = { command: "vscode.open", title: "Open", arguments: [card.uri] };
             item.contextValue = "card";
-            item.description = card.exists ? rowText(card.meta) : "missing";
+            item.description = card.exists ? this.rowDescription(node, row) : "missing";
             if (!card.exists) {
-               item.tooltip = "library.json lists this markdown, but the file does not exist";
+               item.tooltip = "library.json lists this card, but the file does not exist";
             }
             this.applyIcon(item, card.meta.icon, card.meta.color, `card/${this.cards.indexOf(card)}`);
             return item;
@@ -239,10 +261,11 @@ export class LibraryTree
             const resource = lesson.uri.with({ scheme: LIBRARY_SCHEME });
             const item = new vscode.TreeItem(resource, vscode.TreeItemCollapsibleState.None);
             item.id = nodeId(node);
+            const row = this.rowFor(node);
+            item.label = titleLabel(row, lesson.meta);
             item.command = { command: "vscode.open", title: "Open", arguments: [lesson.uri] };
             item.contextValue = "lesson";
-            const text = this.mode === "day" ? [lesson.card.name, rowText(lesson.meta)].filter(Boolean).join(" · ") : rowText(lesson.meta);
-            item.description = lesson.exists ? text : "missing";
+            item.description = lesson.exists ? this.rowDescription(node, row) : "missing";
             if (!lesson.exists) {
                item.tooltip = "library.json lists this file, but it does not exist. Renamed outside VS Code?";
             }
@@ -255,11 +278,72 @@ export class LibraryTree
       if (item.tooltip !== undefined) {
          return item;
       }
-      const hover = await this.hoverCards.build(node);
+      const config = this.previewFor(node);
+      const hover = await this.hoverCards.build(node, config);
       if (!token.isCancellationRequested) {
-         item.tooltip = hover;
+         item.tooltip = hover ?? "";
       }
       return item;
+   }
+
+   previewFor(node: Node): PreviewConfig {
+      return resolvePreview(this.previewLayers(node));
+   }
+
+   previewLayers(node: Node): (PreviewValue | undefined)[] {
+      return this.layersOf(node, (meta) => meta.preview);
+   }
+
+   rowFor(node: Node): RowConfig {
+      return resolveRow(this.rowLayers(node));
+   }
+
+   rowLayers(node: Node): (RowSetting | undefined)[] {
+      return this.layersOf(node, (meta) => meta.row);
+   }
+
+   private layersOf<T>(node: Node, pick: (meta: LayerMeta) => T | undefined): (T | undefined)[] {
+      return this.layerMetas(node).map((meta) => (meta === undefined ? undefined : pick(meta)));
+   }
+
+   private layerMetas(node: Node): (LayerMeta | undefined)[] {
+      switch (node.kind) {
+         case "lesson": {
+            const { lesson } = node;
+            const fileType = fileTypeMeta(this.fileTypesOf(lesson.card.jsonUri), lesson.uri.fsPath);
+            return [fileType, this.categoryOfCard(lesson.card)?.meta, lesson.card.meta, lesson.meta];
+         }
+         case "card": {
+            const { card } = node;
+            const fileType = fileTypeMeta(this.fileTypesOf(card.jsonUri), card.uri.fsPath);
+            return [fileType, this.categoryOfCard(card)?.meta, card.meta];
+         }
+         case "category":
+            return [node.category.meta];
+         case "day":
+            return [];
+      }
+   }
+
+   private fileTypesOf(jsonUri: vscode.Uri): Record<string, FileTypeMeta> {
+      return this.fileTypes.get(jsonUri.fsPath) ?? {};
+   }
+
+   private rowDescription(node: RowNode, row: RowConfig): string {
+      const meta = node.kind === "card" ? node.card.meta : node.lesson.meta;
+      const labelled = labelPart(row, meta);
+      const shown = row.parts.filter((part) => part !== labelled);
+      const values = shown.map((part) => this.partValue(node, part, row));
+      const cardName = node.kind === "lesson" && this.mode === "day" ? node.lesson.card.name : undefined;
+      return joinParts([cardName, ...values]);
+   }
+
+   private partValue(node: RowNode, part: RowPart, row: RowConfig): string | undefined {
+      if (node.kind === "card") {
+         return cardPartValue(node.card, part);
+      }
+      const showDate = this.mode !== "day";
+      return lessonPartValue(node.lesson, part, row, showDate);
    }
 
    resolveRef(ref: HoverRef): Node | undefined {
@@ -435,7 +519,7 @@ export class LibraryTree
       const jsonUri = moving[0]?.jsonUri ?? category.jsonUri;
       const folder = path.dirname(jsonUri.fsPath);
       const newKeys = external
-         .filter((uri) => /\.(md|markdown)$/i.test(uri.fsPath))
+         .filter((uri) => path.basename(uri.fsPath).toLowerCase() !== LIBRARY_FILE)
          .map((uri) => this.findCardByUri(uri)?.key ?? toRelative(folder, uri.fsPath));
       const movingKeys = new Set([...moving.map((c) => c.key), ...newKeys]);
       const staying = category.cards.filter((c) => c.jsonUri.fsPath === jsonUri.fsPath && !movingKeys.has(c.key));
@@ -569,6 +653,43 @@ function byOrderThenName(a: Ordered, b: Ordered): number {
    return path.basename(a.uri.fsPath).localeCompare(path.basename(b.uri.fsPath), [], { numeric: true });
 }
 
-function rowText(meta: { title?: string; description?: string }): string {
-   return [meta.title, meta.description].filter((s): s is string => !!s).join(" · ");
+function titleLabel(row: RowConfig, meta: RowMeta): string | undefined {
+   return row.label === "title" && meta.title ? meta.title : undefined;
+}
+
+function labelPart(row: RowConfig, meta: RowMeta): RowPart {
+   return titleLabel(row, meta) === undefined ? "fileName" : "title";
+}
+
+function cardPartValue(card: Card, part: RowPart): string | undefined {
+   switch (part) {
+      case "fileName":
+         return card.name;
+      case "title":
+         return card.meta.title;
+      case "description":
+         return card.meta.description;
+      case "date":
+      case "tags":
+         return undefined;
+   }
+}
+
+function lessonPartValue(lesson: Lesson, part: RowPart, row: RowConfig, showDate: boolean): string | undefined {
+   switch (part) {
+      case "fileName":
+         return path.basename(lesson.uri.fsPath);
+      case "title":
+         return lesson.meta.title;
+      case "description":
+         return lesson.meta.description;
+      case "date":
+         return showDate ? formatDay(lesson.day, row.date) : undefined;
+      case "tags":
+         return lesson.meta.tags?.join(", ");
+   }
+}
+
+function joinParts(parts: (string | undefined)[]): string {
+   return parts.filter((s): s is string => !!s).join(" · ");
 }

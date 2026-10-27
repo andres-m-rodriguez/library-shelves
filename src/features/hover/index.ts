@@ -14,6 +14,7 @@ const COMMANDS: Record<Exclude<HoverAction, "open" | "openCard">, string> = {
    moveToCategory: "library.moveToCategory",
    setIcon: "library.setIcon",
    setColor: "library.setColor",
+   configurePreview: "library.configurePreview",
 };
 
 export function register(ctx: FeatureContext): void {

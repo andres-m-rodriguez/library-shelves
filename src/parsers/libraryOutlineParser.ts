@@ -1,12 +1,12 @@
 import { parseTree, type JSONPath, type Node as JsonNode } from "jsonc-parser";
-import { CATEGORIES_KEY, SCHEMA_KEY, type CardCategory, type JsonProperty, type LibraryOutline } from "../contracts";
+import { CATEGORIES_KEY, FILE_TYPES_KEY, SCHEMA_KEY, type CardCategory, type JsonProperty, type LibraryOutline } from "../contracts";
 
 export class LibraryOutlineParser {
    parse(text: string): LibraryOutline {
       const root = parseTree(text, [], { allowTrailingComma: true });
       const outline: LibraryOutline = { root, categoriesNode: undefined, declared: [], cards: [] };
       for (const property of this.propertiesOf(root)) {
-         if (property.key === SCHEMA_KEY) {
+         if (property.key === SCHEMA_KEY || property.key === FILE_TYPES_KEY) {
             continue;
          }
          if (property.key === CATEGORIES_KEY) {
@@ -40,7 +40,7 @@ export class LibraryOutlineParser {
          return false;
       }
       const [cardKey, property] = jsonPath;
-      const isCard = typeof cardKey === "string" && cardKey !== CATEGORIES_KEY && cardKey !== SCHEMA_KEY;
+      const isCard = typeof cardKey === "string" && cardKey !== CATEGORIES_KEY && cardKey !== FILE_TYPES_KEY && cardKey !== SCHEMA_KEY;
       return isCard && property === "category";
    }
 

@@ -7,7 +7,7 @@ import { plural } from "../../services";
 export async function clearLessons(ctx: FeatureContext, node: Option<Node>): Promise<void> {
    const cards = ctx.selection.targetsOfKind(node, "card").map((n) => n.card);
    if (!cards.length) {
-      ctx.dialogs.info("Right-click a markdown card in the Library view to clear its lessons.");
+      ctx.dialogs.info("Right-click a card in the Library view to clear its lessons.");
       return;
    }
    const total = cards.reduce((sum, c) => sum + c.lessons.length, 0);

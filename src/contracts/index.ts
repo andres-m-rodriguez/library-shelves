@@ -7,3 +7,5 @@ export * from "./library";
 export * from "./model";
 export * from "./outline";
 export * from "./parsing";
+export * from "./preview";
+export * from "./row";

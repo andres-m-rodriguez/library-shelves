@@ -1,6 +1,6 @@
 import * as vscode from "vscode";
 import { pickIcon } from "../library/icons";
-import { map, option, raw, type Option } from "../option";
+import { map, none, option, raw, some, type Option } from "../option";
 import type { LibraryTree } from "../tree/libraryTree";
 
 const STATUS_MS = 4000;
@@ -18,6 +18,14 @@ export interface Confirmation {
 
    changes: string;
 }
+
+export interface PartsPickOptions {
+   title: string;
+   placeholder: string;
+   resetTooltip: string;
+}
+
+export type PartsPick<T> = { kind: "picked"; items: T[] } | { kind: "reset" };
 
 
 export class Dialogs {
@@ -85,6 +93,36 @@ export class Dialogs {
          quickPick.onDidHide(() => {
             quickPick.dispose();
             resolve([]);
+         });
+         quickPick.show();
+      });
+   }
+
+
+   pickParts<T extends vscode.QuickPickItem>(items: T[], picked: T[], options: PartsPickOptions): Promise<Option<PartsPick<T>>> {
+      return new Promise((resolve) => {
+         const quickPick = vscode.window.createQuickPick<T>();
+         const resetIcon = new vscode.ThemeIcon("discard");
+         const resetButton: vscode.QuickInputButton = { iconPath: resetIcon, tooltip: options.resetTooltip };
+         quickPick.title = options.title;
+         quickPick.placeholder = options.placeholder;
+         quickPick.canSelectMany = true;
+         quickPick.matchOnDescription = true;
+         quickPick.items = items;
+         quickPick.selectedItems = picked;
+         quickPick.buttons = [resetButton];
+         let result: Option<PartsPick<T>> = none;
+         quickPick.onDidTriggerButton(() => {
+            result = some({ kind: "reset" });
+            quickPick.hide();
+         });
+         quickPick.onDidAccept(() => {
+            result = some({ kind: "picked", items: [...quickPick.selectedItems] });
+            quickPick.hide();
+         });
+         quickPick.onDidHide(() => {
+            quickPick.dispose();
+            resolve(result);
          });
          quickPick.show();
       });

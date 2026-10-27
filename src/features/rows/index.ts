@@ -6,6 +6,8 @@ import { none, option, raw, type Option } from "../../option";
 import { removeCards } from "../cards";
 import { removeCategory } from "../categories";
 import { removeLessons } from "../lessons";
+import { configurePreview } from "./configurePreview";
+import { configureRow } from "./configureRow";
 import { editDetails } from "./editDetails";
 import { setColor } from "./setColor";
 
@@ -14,6 +16,8 @@ export function register(ctx: FeatureContext): void {
       vscode.commands.registerCommand("library.editDetails", (node?: Node) => editDetails(ctx, option(node))),
       vscode.commands.registerCommand("library.setColor", (node?: Node) => setColor(ctx, option(node))),
       vscode.commands.registerCommand("library.setIcon", (node?: Node) => setIcon(ctx, option(node))),
+      vscode.commands.registerCommand("library.configurePreview", (node?: Node) => configurePreview(ctx, option(node))),
+      vscode.commands.registerCommand("library.configureRow", (node?: Node) => configureRow(ctx, option(node))),
       vscode.commands.registerCommand("library.remove", () => removeSelection(ctx)),
    );
 }
@@ -27,7 +31,7 @@ async function setIcon(ctx: FeatureContext, node: Option<Node>): Promise<void> {
       const { category } = node.value;
       return ctx.dialogs.pickIcon(ctx.tree, category.name, option(category.meta.icon), (icon) => writeCategoryIcon(category, raw(icon)));
    }
-   ctx.dialogs.info("Right-click a category or markdown in the Library view to set its icon.");
+   ctx.dialogs.info("Right-click a category or card in the Library view to set its icon.");
 }
 
 async function removeSelection(ctx: FeatureContext): Promise<void> {

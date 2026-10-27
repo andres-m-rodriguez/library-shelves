@@ -12,7 +12,7 @@ type FileItem = vscode.QuickPickItem & { name: string };
 export async function addLesson(ctx: FeatureContext, node: Option<Node>): Promise<void> {
    const card = ctx.selection.cardOf(node);
    if (!card.some) {
-      ctx.dialogs.info("Select a markdown card (or one of its lessons) in the Library view first.");
+      ctx.dialogs.info("Select a card (or one of its lessons) in the Library view first.");
       return;
    }
    const items = await candidateFiles(ctx, card.value);

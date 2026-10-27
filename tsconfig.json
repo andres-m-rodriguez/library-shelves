@@ -6,5 +6,5 @@
     "noEmit": true,
     "types": ["vscode", "node"]
   },
-  "include": ["src"]
+  "include": ["src", "test"]
 }
