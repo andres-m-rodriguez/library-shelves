@@ -14,7 +14,7 @@ export async function removeCards(ctx: FeatureContext, node: Option<Node>): Prom
       action: "Remove",
       affected: cards.map((c) => c.name),
       keeps: "The card files and their lesson files stay on disk.",
-      changes: "Only the entries in library.json go away.",
+      changes: "Only the entries in the library go away.",
    });
    if (!confirmed) {
       return;

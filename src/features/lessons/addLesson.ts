@@ -1,6 +1,6 @@
 import * as path from "path";
 import * as vscode from "vscode";
-import { type Card, type Lesson, type LessonMeta, LIBRARY_FILE, type Node } from "../../contracts";
+import { type Card, isLibraryFile, type Lesson, type LessonMeta, LIBRARY_FILE, type Node } from "../../contracts";
 import type { FeatureContext } from "../../extension";
 import { toRelative } from "../../library/files";
 import { flatMap, nonEmpty, option, type Option } from "../../option";
@@ -60,7 +60,7 @@ async function candidateFiles(ctx: FeatureContext, card: Card): Promise<FileItem
    const items: FileItem[] = [];
    for (const uri of found) {
       const lower = uri.fsPath.toLowerCase();
-      if (skip.has(lower) || path.basename(lower) === LIBRARY_FILE) {
+      if (skip.has(lower) || isLibraryFile(lower)) {
          continue;
       }
       const known = option(owner.get(lower));

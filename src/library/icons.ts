@@ -56,7 +56,7 @@ export async function pickIcon(
    );
    const placeHolder = catalog.ids.length
       ? `Icon for ${label} (${catalog.ids.length} in ${catalog.themeId})`
-      : "The active icon theme could not be read. Type a codicon like $(book) in library.json instead.";
+      : "The active icon theme could not be read. Type a codicon like $(book) in the library file instead.";
    const pick = await vscode.window.showQuickPick(items, { placeHolder, matchOnDescription: true });
    if (!pick || pick.role === "separator") {
       return;

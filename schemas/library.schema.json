@@ -22,6 +22,33 @@
       "additionalProperties": {
         "$ref": "#/definitions/fileType"
       }
+    },
+    "$background": {
+      "type": "object",
+      "description": "Optional picture shown behind the shelves when the library file is opened.",
+      "additionalProperties": false,
+      "properties": {
+        "image": {
+          "type": "string",
+          "description": "An image file inside the library's folder, relative to the library file. Animated GIFs play."
+        },
+        "dim": {
+          "type": "number",
+          "description": "How strongly the editor color covers the image, from 0 (the image as it is) to 1 (hidden). Defaults to 0.7.",
+          "minimum": 0,
+          "maximum": 1
+        },
+        "fit": {
+          "type": "string",
+          "description": "How the image fills the window. Defaults to cover.",
+          "enum": ["cover", "contain", "tile"],
+          "enumDescriptions": [
+            "Fill the window, cropping the edges if the shape differs.",
+            "Show the whole image, leaving empty space if the shape differs.",
+            "Repeat the image as tiles."
+          ]
+        }
+      }
     }
   },
   "additionalProperties": {

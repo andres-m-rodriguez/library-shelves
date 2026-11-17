@@ -9,3 +9,4 @@ export * from "./outline";
 export * from "./parsing";
 export * from "./preview";
 export * from "./row";
+export * from "./shelf";

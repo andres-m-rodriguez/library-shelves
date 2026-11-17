@@ -4,7 +4,22 @@ A VS Code view for your notes and the code files that go with them. Each note is
 
 Install: download the `.vsix` from [Releases](https://github.com/andres-m-rodriguez/library-shelves/releases) and run `code --install-extension library-shelves.vsix`. See [Verifying the download](#verifying-the-download) if you want to check the file before installing it.
 
-Everything lives in a `library.json` next to your files:
+Everything lives in a `library.shelf` next to your files. Opening it shows your cards on shelves, one shelf per category, so you rarely need to look inside it. Any file ending in `.shelf` works, so a workspace can hold several. Run "Library: New Library" to create one.
+
+## The shelves
+
+- Each category is a shelf and each card is a tile with its title, description, color and lesson count.
+- Every tile is the same size. Click one, or press Enter on it, to go to that card's page: its title and description, an Open Card button, and its lessons as a numbered list with their tags. Click a lesson to open it, or use its run button.
+- On a card's page, the buttons at the bottom step to the previous and next card on the same shelf. "Library" at the top, or Escape, goes back to the shelves.
+- The search box narrows the shelves to the cards whose name, description, category or lessons match every word. On a card's page it searches that card's lessons.
+- The funnel button next to the search box opens the filters. "Search in" chooses what the search box looks at: names and categories, descriptions, lessons, tags. "Show only" narrows the shelves to the categories, colors and tags you pick; any pick within a group is enough, and every group has to agree. Active filters show as chips under the toolbar and can be removed one by one.
+- Right-click a shelf, a tile or a lesson, or use its ... button, for the same commands the Library view has: add lessons, edit details, move, set icon or color, remove.
+- New Card and New Category are in the toolbar. The + on a shelf adds a card straight to that category.
+- The dropdown next to the funnel picks how cards look, saved as the `library.cardStyle` setting: Classic cards (everything visible), Reveal on hover (only the title, centered; hovering moves it to the top and shows the description and lesson count) or Book covers (the card's initial on its color, with the title underneath).
+- Background puts a picture behind the shelves; see [Background](#background).
+- Edit as Text opens the file itself.
+
+Inside, a `.shelf` file is JSON. A `library.json` from an earlier version is still read; rename it to `library.shelf` to get the shelves.
 
 ```json
 {
@@ -27,24 +42,24 @@ Everything lives in a `library.json` next to your files:
 
 Only `name` is required on a lesson. Cards and lessons also take `title`, `description`, `order`, `color`, `icon`, `tags` and `date`. Categories declared under `$categories` take `icon`, `color`, `order` and `description`. Comments and trailing commas are fine, and the extension keeps them when it edits the file.
 
-A schema is registered for every `library.json`, so you get completion, hover help and validation. Category names are checked against `$categories` and a quick fix declares any that are missing.
+A schema is registered for every library file, so when you edit it as text you get completion, hover help and validation. Category names are checked against `$categories` and a quick fix declares any that are missing.
 
 ## Using the view
 
 - Click a row to open the file. Hover for a detail card with the first lines of the file and quick actions.
-- The + button in the title bar adds a card: Create file makes a new file next to `library.json` (a bare name gets `.md`) and Add existing lists files that are already there.
+- The + button in the title bar adds a card: Create file makes a new file next to `library.shelf` (a bare name gets `.md`) and Add existing lists files that are already there.
 - Right-click a category, card or lesson for its commands: add, rename, set icon or color, edit details, move, remove. Delete removes the selection, F2 renames, Insert adds lessons.
 - Drag to reorder lessons within a card or cards within a category. Drag onto a card or category to move. Drag files in from the Explorer to add them.
 - Sort by category, by day written, or alphabetically with the list button in the title bar.
 - Rows show the file name by default, with the title and description next to it. See [Rows](#rows) to change what a row shows.
 - Filter with the search button. Type to narrow the view as you go, or pick a color, tag or category from the list. Active terms show as rows you can remove one by one. The view subtitle shows what is active.
-- Renaming or moving a listed file inside VS Code updates `library.json`.
+- Renaming or moving a listed file inside VS Code updates `library.shelf`.
 
 Nothing is ever deleted from disk. Removing something only drops its entry.
 
 ## Preview
 
-Hovering a row shows a preview with three parts: a summary (title, description, card, category, tags, date, color, order), an excerpt (the first lines of a lesson, the quoted start of a card, or the card names of a category) and the quick action links. Choose which parts appear with a `preview` entry on a lesson, a card or a category in `library.json`, or for every file with a given extension under `$fileTypes`:
+Hovering a row shows a preview with three parts: a summary (title, description, card, category, tags, date, color, order), an excerpt (the first lines of a lesson, the quoted start of a card, or the card names of a category) and the quick action links. Choose which parts appear with a `preview` entry on a lesson, a card or a category in `library.shelf`, or for every file with a given extension under `$fileTypes`:
 
 ```json
 {
@@ -104,6 +119,18 @@ Any other string is a custom pattern built from the tokens `YYYY`, `YY`, `MMMM`,
 
 Run "Configure Row..." from a row's context menu to edit all of this without opening the file. It offers the same scopes as the preview: this lesson, all files of its type, the card, or the category. Anything left out is inherited the same way, so a lesson overrides its card, the card overrides its category, and the category overrides the file type.
 
+## Background
+
+The Background button, or "Library: Set Background...", puts an image behind the shelves. Any image the editor can show works, including animated GIFs, which play. The choice is saved in the library file, so it travels with it:
+
+```json
+{
+  "$background": { "image": "art/night.gif", "dim": 0.7, "fit": "cover" }
+}
+```
+
+`image` is a file inside the library's folder; pick one from elsewhere and the extension offers to copy it next to the library. `dim` is how strongly the editor color is laid over the picture so text stays readable, from 0 (the picture as it is) to 1 (hidden). `fit` is `cover` (fill the window), `contain` (show the whole image) or `tile` (repeat it). Only local files are shown; a web address is not loaded.
+
 ## Verifying the download
 
 You do not have to take the author's word for what is in the `.vsix`. Every release file is built by GitHub, not on a developer machine, from the commit the release tag points at. The workflow is [release.yml](.github/workflows/release.yml), every run and its full log are public under [Actions](https://github.com/andres-m-rodriguez/library-shelves/actions), and GitHub signs a provenance statement for the file it produced. You can check all of this yourself.
@@ -125,9 +152,9 @@ sha256sum library-shelves.vsix               # macOS or Linux
 
 The digest is listed on the repository's [Attestations](https://github.com/andres-m-rodriguez/library-shelves/attestations) page and in the "Record the checksum" step of the release run's log. If the hashes match, the file is the one that run built.
 
-**Reading the code.** The `.vsix` is a zip. Unzip it and you will find one unminified JavaScript file at `extension/dist/extension.js`, bundled from the `src` folder in this repository, plus the JSON schema and manifest. Pasting that file into an AI assistant and asking what it reads, writes, or sends anywhere is a reasonable check for someone who does not read TypeScript. Do not trust comments that tell a reader to skip a section.
+**Reading the code.** The `.vsix` is a zip. Unzip it and you will find one unminified JavaScript file at `extension/dist/extension.js`, bundled from the `src` folder in this repository, plus the JSON schema and manifest. The shelves page is two more readable files, `extension/media/shelf.js` and `extension/media/shelf.css`, copied unchanged from the `media` folder. Pasting that file into an AI assistant and asking what it reads, writes, or sends anywhere is a reasonable check for someone who does not read TypeScript. Do not trust comments that tell a reader to skip a section.
 
-**What the extension touches.** It reads and writes the `library.json` files in your workspace, opens files you click, and does not make network requests. The only command it ever runs is the one in the `library.runCommand` setting, and only when you press run on a lesson. Installing a `.vsix` with `code --install-extension` runs no scripts.
+**What the extension touches.** It reads and writes the `.shelf` and `library.json` files in your workspace, opens files you click, copies a background image next to the library when you pick one from elsewhere and agree, and does not make network requests. The only command it ever runs is the one in the `library.runCommand` setting, and only when you press run on a lesson. Installing a `.vsix` with `code --install-extension` runs no scripts.
 
 ## Run
 

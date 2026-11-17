@@ -1,9 +1,12 @@
 import * as path from "path";
 import * as vscode from "vscode";
 import {
+   isLibraryFile,
    LIBRARY_FILE,
+   LIBRARY_GLOB,
    TREE_MIME,
    URI_LIST_MIME,
+   type BackgroundMeta,
    type Card,
    type Category,
    type CategoryMeta,
@@ -84,6 +87,8 @@ export class LibraryTree
    private readonly decorated = new Map<string, string | undefined>();
    private readonly hoverCards = new HoverCards();
    fileTypes = new Map<string, Record<string, FileTypeMeta>>();
+   // Keyed by the lower-cased path of the library file.
+   backgrounds = new Map<string, BackgroundMeta>();
 
    refresh(): void {
       this.changed.fire(undefined);
@@ -102,13 +107,17 @@ export class LibraryTree
    async load(): Promise<void> {
       const cards: Card[] = [];
       const categoryMeta = new Map<string, KnownCategory>();
-      const jsonFiles = await vscode.workspace.findFiles(`**/${LIBRARY_FILE}`, "**/node_modules/**");
+      const jsonFiles = await vscode.workspace.findFiles(LIBRARY_GLOB, "**/node_modules/**");
       this.fileTypes.clear();
+      this.backgrounds.clear();
 
       for (const jsonUri of jsonFiles) {
          const folder = path.dirname(jsonUri.fsPath);
          const mapping = await readMapping(jsonUri);
          this.fileTypes.set(jsonUri.fsPath, mapping.fileTypes);
+         if (mapping.background) {
+            this.backgrounds.set(jsonUri.fsPath.toLowerCase(), mapping.background);
+         }
          for (const [name, meta] of Object.entries(mapping.categories)) {
             categoryMeta.set(name.trim().toLowerCase(), { meta, jsonUri, written: name.trim() });
          }
@@ -251,7 +260,7 @@ export class LibraryTree
             item.contextValue = "card";
             item.description = card.exists ? this.rowDescription(node, row) : "missing";
             if (!card.exists) {
-               item.tooltip = "library.json lists this card, but the file does not exist";
+               item.tooltip = "The library lists this card, but the file does not exist";
             }
             this.applyIcon(item, card.meta.icon, card.meta.color, `card/${this.cards.indexOf(card)}`);
             return item;
@@ -267,7 +276,7 @@ export class LibraryTree
             item.contextValue = "lesson";
             item.description = lesson.exists ? this.rowDescription(node, row) : "missing";
             if (!lesson.exists) {
-               item.tooltip = "library.json lists this file, but it does not exist. Renamed outside VS Code?";
+               item.tooltip = "The library lists this file, but it does not exist. Renamed outside VS Code?";
             }
             return item;
          }
@@ -519,7 +528,7 @@ export class LibraryTree
       const jsonUri = moving[0]?.jsonUri ?? category.jsonUri;
       const folder = path.dirname(jsonUri.fsPath);
       const newKeys = external
-         .filter((uri) => path.basename(uri.fsPath).toLowerCase() !== LIBRARY_FILE)
+         .filter((uri) => !isLibraryFile(uri.fsPath))
          .map((uri) => this.findCardByUri(uri)?.key ?? toRelative(folder, uri.fsPath));
       const movingKeys = new Set([...moving.map((c) => c.key), ...newKeys]);
       const staying = category.cards.filter((c) => c.jsonUri.fsPath === jsonUri.fsPath && !movingKeys.has(c.key));
@@ -562,8 +571,7 @@ export class LibraryTree
          moving.push({ name: lesson.meta.name, uri: lesson.uri });
       }
       for (const uri of external) {
-         const base = path.basename(uri.fsPath).toLowerCase();
-         if (base === LIBRARY_FILE || uri.fsPath.toLowerCase() === card.uri.fsPath.toLowerCase()) {
+         if (isLibraryFile(uri.fsPath) || uri.fsPath.toLowerCase() === card.uri.fsPath.toLowerCase()) {
             continue;
          }
          const known = this.findLessonByUri(uri);

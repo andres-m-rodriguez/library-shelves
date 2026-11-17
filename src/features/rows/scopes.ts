@@ -71,7 +71,7 @@ function lessonScopes(row: LessonNode): ScopeItem[] {
    const { lesson } = row;
    const fileName = path.basename(lesson.uri.fsPath);
    const items: ScopeItem[] = [{ role: "lesson", lesson, label: "This lesson", description: `only ${fileName}` }];
-   items.push(...fileTypeScope(fileName, "every lesson of this type in this library.json"));
+   items.push(...fileTypeScope(fileName, "every lesson of this type in this library"));
    items.push({ role: "card", card: lesson.card, label: `Card ${lesson.card.name}`, description: "every lesson in this card" });
    items.push(...categoryScope(lesson.card));
    return items;
@@ -81,7 +81,7 @@ function cardScopes(row: CardNode): ScopeItem[] {
    const { card } = row;
    const fileName = path.basename(card.uri.fsPath);
    const items: ScopeItem[] = [{ role: "card", card, label: "This card", description: `${card.name} and its lessons` }];
-   items.push(...fileTypeScope(fileName, "every file of this type in this library.json"));
+   items.push(...fileTypeScope(fileName, "every file of this type in this library"));
    items.push(...categoryScope(card));
    return items;
 }

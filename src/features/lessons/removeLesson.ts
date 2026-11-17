@@ -16,7 +16,7 @@ export async function removeLessons(ctx: FeatureContext, node: Option<Node>): Pr
       action: "Remove",
       affected: lessons.map((l) => l.meta.name),
       keeps: "The files stay on disk.",
-      changes: "Only their entries in library.json go away.",
+      changes: "Only their entries in the library go away.",
    });
    if (!confirmed) {
       return;

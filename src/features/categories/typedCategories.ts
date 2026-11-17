@@ -1,7 +1,7 @@
 import * as path from "path";
 import * as vscode from "vscode";
 import { applyEdits, getLocation, modify, type Edit, type ModificationOptions, type Node as JsonNode } from "jsonc-parser";
-import { CATEGORIES_KEY, type DeclaredCategory, LIBRARY_FILE, type LibraryOutline, SCHEMA_KEY } from "../../contracts";
+import { CATEGORIES_KEY, type DeclaredCategory, isLibraryFile, LIBRARY_FILE, LIBRARY_GLOB, type LibraryOutline, SCHEMA_KEY } from "../../contracts";
 import type { FeatureContext } from "../../extension";
 import { FORMAT } from "../../library/jsonDocument";
 import { compact, map, none, option, some, type Option } from "../../option";
@@ -13,8 +13,8 @@ const CHECK_COMMAND = "library.checkCategories";
 const DEBOUNCE_MS = 300;
 
 const SELECTOR: vscode.DocumentSelector = [
-   { language: "jsonc", pattern: `**/${LIBRARY_FILE}` },
-   { language: "json", pattern: `**/${LIBRARY_FILE}` },
+   { language: "jsonc", pattern: LIBRARY_GLOB },
+   { language: "json", pattern: LIBRARY_GLOB },
 ];
 
 export function registerTypedCategories(ctx: FeatureContext): void {
@@ -40,7 +40,7 @@ export function registerTypedCategories(ctx: FeatureContext): void {
 
 function isLibraryJson(document: vscode.TextDocument): boolean {
    const isJson = document.languageId === "json" || document.languageId === "jsonc";
-   return isJson && path.basename(document.uri.path).toLowerCase() === LIBRARY_FILE;
+   return isJson && isLibraryFile(document.uri.path);
 }
 
 function rangeOf(document: vscode.TextDocument, node: JsonNode): vscode.Range {
@@ -255,7 +255,7 @@ function declareAll(document: vscode.TextDocument, outline: LibraryOutline, name
 }
 
 async function checkAll(ctx: FeatureContext, diagnostics: CategoryDiagnostics): Promise<void> {
-   const jsonFiles = await vscode.workspace.findFiles(`**/${LIBRARY_FILE}`, "**/node_modules/**");
+   const jsonFiles = await vscode.workspace.findFiles(LIBRARY_GLOB, "**/node_modules/**");
    let undeclared = 0;
    let files = 0;
    for (const uri of jsonFiles) {

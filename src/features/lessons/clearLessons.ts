@@ -20,7 +20,7 @@ export async function clearLessons(ctx: FeatureContext, node: Option<Node>): Pro
       action: "Clear",
       affected: cards.map((c) => c.name),
       keeps: "The lesson files stay on disk.",
-      changes: "Only the lessons list in library.json is emptied.",
+      changes: "Only the lessons list in the library is emptied.",
    });
    if (!confirmed) {
       return;

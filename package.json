@@ -1,8 +1,8 @@
 {
   "name": "library-shelves",
   "displayName": "Library Shelves",
-  "description": "Markdown cards with their lessons, grouped by category, from a library.json.",
-  "version": "0.0.3",
+  "description": "Notes as cards on shelves, with the code files that go with them, from a library.shelf.",
+  "version": "0.1.0",
   "publisher": "overlord",
   "license": "MIT",
   "repository": {
@@ -17,7 +17,8 @@
   ],
   "main": "./dist/extension.js",
   "activationEvents": [
-    "workspaceContains:**/library.json"
+    "workspaceContains:**/library.json",
+    "workspaceContains:**/*.shelf"
   ],
   "contributes": {
     "views": {
@@ -33,7 +34,7 @@
     "viewsWelcome": [
       {
         "view": "libraryShelves",
-        "contents": "No library.json found.\nCreate one next to your files. Each key is a markdown card with a category and its lessons. IntelliSense is available inside it.\n\n{\n  \"variables.md\": {\n    \"category\": \"Week 1\",\n    \"lessons\": [{ \"name\": \"declare.cs\" }]\n  }\n}",
+        "contents": "No library found.\n[Create library.shelf](command:library.newLibrary)\nA library.shelf lists your notes as cards, grouped into categories, each with its lessons. Opening it shows the shelves.",
         "when": "!library.filterActive"
       },
       {
@@ -42,7 +43,31 @@
         "contents": "Nothing matches the filter.\n[Change filter](command:library.filter)\n[Clear filter](command:library.clearFilter)"
       }
     ],
+    "customEditors": [
+      {
+        "viewType": "library.shelf",
+        "displayName": "Library Shelves",
+        "selector": [
+          {
+            "filenamePattern": "*.shelf"
+          }
+        ],
+        "priority": "default"
+      }
+    ],
     "commands": [
+      {
+        "command": "library.newLibrary",
+        "title": "New Library",
+        "category": "Library",
+        "icon": "$(library)"
+      },
+      {
+        "command": "library.setBackground",
+        "title": "Set Background...",
+        "category": "Library",
+        "icon": "$(file-media)"
+      },
       {
         "command": "library.refresh",
         "title": "Refresh",
@@ -236,14 +261,16 @@
       {
         "fileMatch": [
           "library.json",
-          "**/library.json"
+          "**/library.json",
+          "*.shelf"
         ],
         "url": "./schemas/library.schema.json"
       },
       {
         "fileMatch": [
           "library.json",
-          "**/library.json"
+          "**/library.json",
+          "*.shelf"
         ],
         "url": "library-schema://schemas/library.schema.json"
       }
@@ -253,6 +280,9 @@
         "id": "jsonc",
         "filenames": [
           "library.json"
+        ],
+        "extensions": [
+          ".shelf"
         ]
       }
     ],
@@ -458,6 +488,21 @@
     "configuration": {
       "title": "Library Shelves",
       "properties": {
+        "library.cardStyle": {
+          "type": "string",
+          "default": "classic",
+          "enum": [
+            "classic",
+            "reveal",
+            "cover"
+          ],
+          "enumDescriptions": [
+            "Title, file name, description and lesson count, all visible.",
+            "Only the title, centered. Hovering moves it to the top and shows the description.",
+            "A book cover in the card's color with a large initial, and the title underneath."
+          ],
+          "description": "How the cards look on the shelves when a library file is opened."
+        },
         "library.runCommand": {
           "type": "string",
           "default": "dotnet run \"${file}\"",

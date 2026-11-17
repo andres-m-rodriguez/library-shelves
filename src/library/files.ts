@@ -1,6 +1,6 @@
 import * as path from "path";
 import * as vscode from "vscode";
-import { CATEGORIES_KEY, FILE_TYPES_KEY, LIBRARY_FILE, SCHEMA_KEY } from "../contracts";
+import { BACKGROUND_KEY, CATEGORIES_KEY, FILE_TYPES_KEY, LIBRARY_GLOB, SCHEMA_KEY } from "../contracts";
 import { parsers } from "../parsers";
 import { JsonDocument, isCardMeta, type OpenedDocument } from "./jsonDocument";
 
@@ -37,7 +37,7 @@ export function toRelative(folder: string, absolute: string): string {
 }
 
 export async function applyRenames(renames: readonly Rename[]): Promise<void> {
-   const jsonFiles = await vscode.workspace.findFiles(`**/${LIBRARY_FILE}`, "**/node_modules/**");
+   const jsonFiles = await vscode.workspace.findFiles(LIBRARY_GLOB, "**/node_modules/**");
    for (const jsonUri of jsonFiles) {
       const folder = path.dirname(jsonUri.fsPath);
       let opened: OpenedDocument;
@@ -51,7 +51,7 @@ export async function applyRenames(renames: readonly Rename[]): Promise<void> {
       let changed = false;
 
       for (const [key, value] of Object.entries(data)) {
-         if (key === SCHEMA_KEY || key === CATEGORIES_KEY || key === FILE_TYPES_KEY || !isCardMeta(value)) {
+         if (key === SCHEMA_KEY || key === CATEGORIES_KEY || key === FILE_TYPES_KEY || key === BACKGROUND_KEY || !isCardMeta(value)) {
             continue;
          }
          value.lessons?.forEach((lesson, i) => {

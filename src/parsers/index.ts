@@ -8,6 +8,7 @@ import { IconThemeParser } from "./iconThemeParser";
 import { LibraryFileParser } from "./libraryFileParser";
 import { LibraryOutlineParser } from "./libraryOutlineParser";
 import { OrderParser } from "./orderParser";
+import { ShelfMessageParser } from "./shelfMessageParser";
 import { TagListParser } from "./tagListParser";
 import { UriListParser } from "./uriListParser";
 
@@ -22,6 +23,7 @@ export {
    LibraryFileParser,
    LibraryOutlineParser,
    OrderParser,
+   ShelfMessageParser,
    TagListParser,
    UriListParser,
 };
@@ -39,4 +41,5 @@ export const parsers = {
    dragRef: new DragRefParser(),
    uriList: new UriListParser(),
    fileName: new FileNameParser(),
+   shelfMessage: new ShelfMessageParser(),
 };

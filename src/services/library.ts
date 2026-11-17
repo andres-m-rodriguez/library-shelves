@@ -1,5 +1,5 @@
 import * as vscode from "vscode";
-import { type JsonPath, LIBRARY_FILE } from "../contracts";
+import { type JsonPath, LIBRARY_FILE, LIBRARY_GLOB } from "../contracts";
 import { type JsonDocument, openForEdit } from "../library/jsonDocument";
 import { map, none, option, some, type Option } from "../option";
 import type { Dialogs } from "./dialogs";
@@ -44,7 +44,7 @@ export class Library {
    }
 
    async find(): Promise<Option<vscode.Uri>> {
-      const found = await vscode.workspace.findFiles(`**/${LIBRARY_FILE}`, EXCLUDE_GLOB);
+      const found = await vscode.workspace.findFiles(LIBRARY_GLOB, EXCLUDE_GLOB);
       if (found.length === 0) {
          void this.dialogs.warn(`No ${LIBRARY_FILE} in the workspace. Create one next to your card files first.`);
          return none;
@@ -52,12 +52,26 @@ export class Library {
       if (found.length === 1) {
          return some(found[0]);
       }
+      // With several libraries, the one open in the active tab is the one being worked on.
+      const active = activeTabUri();
+      if (active.some && found.some((uri) => uri.fsPath.toLowerCase() === active.value.fsPath.toLowerCase())) {
+         return active;
+      }
       const pick = await this.dialogs.pick(
          found.map((uri) => ({ label: vscode.workspace.asRelativePath(uri, true), uri })),
          { placeHolder: `Which ${LIBRARY_FILE}?` },
       );
       return map(pick, (item) => item.uri);
    }
+}
+
+function activeTabUri(): Option<vscode.Uri> {
+   const tab = option(vscode.window.tabGroups.activeTabGroup.activeTab);
+   if (!tab.some) {
+      return none;
+   }
+   const input: unknown = tab.value.input;
+   return input instanceof vscode.TabInputCustom || input instanceof vscode.TabInputText ? some(input.uri) : none;
 }
 
 export class Batch {

@@ -8,7 +8,7 @@ import { newCardFile } from "./newCardFile";
 type Item = vscode.QuickPickItem & ({ role: "create" } | { role: "existing" });
 
 const ITEMS: Item[] = [
-   { role: "create", label: "$(new-file) Create file", description: "make a new file next to library.json and list it as a card" },
+   { role: "create", label: "$(new-file) Create file", description: "make a new file next to the library and list it as a card" },
    { role: "existing", label: "$(folder-opened) Add existing", description: "pick files that are already there" },
 ];
 

@@ -1,5 +1,8 @@
 import { parse as parseJsonc, printParseErrorCode, type ParseError } from "jsonc-parser";
 import {
+   BACKGROUND_FITS,
+   BACKGROUND_KEY,
+   type BackgroundMeta,
    CATEGORIES_KEY,
    FILE_TYPES_KEY,
    SCHEMA_KEY,
@@ -46,6 +49,14 @@ export class LibraryFileParser {
             this.readFileTypes(raw, value, issues);
             continue;
          }
+         if (key === BACKGROUND_KEY) {
+            if (isPlainObject(raw)) {
+               value.background = this.backgroundOf(root);
+            } else {
+               issues.push({ message: `${BACKGROUND_KEY} must be an object with an image` });
+            }
+            continue;
+         }
          if (this.isCardMeta(raw)) {
             value.cards[key] = raw;
          } else {
@@ -57,7 +68,7 @@ export class LibraryFileParser {
 
    *cards(root: Record<string, unknown>): IterableIterator<[string, CardMeta]> {
       for (const [key, raw] of Object.entries(root)) {
-         if (key !== SCHEMA_KEY && key !== CATEGORIES_KEY && key !== FILE_TYPES_KEY && this.isCardMeta(raw)) {
+         if (key !== SCHEMA_KEY && key !== CATEGORIES_KEY && key !== FILE_TYPES_KEY && key !== BACKGROUND_KEY && this.isCardMeta(raw)) {
             yield [key, raw];
          }
       }
@@ -75,6 +86,26 @@ export class LibraryFileParser {
          }
       }
       return categories;
+   }
+
+   // Keeps only the background settings that are usable; anything malformed is dropped.
+   backgroundOf(root: Record<string, unknown>): BackgroundMeta {
+      const block = root[BACKGROUND_KEY];
+      const background: BackgroundMeta = {};
+      if (!isPlainObject(block)) {
+         return background;
+      }
+      if (typeof block.image === "string" && block.image.trim()) {
+         background.image = block.image.trim();
+      }
+      if (typeof block.dim === "number" && Number.isFinite(block.dim)) {
+         background.dim = Math.min(1, Math.max(0, block.dim));
+      }
+      const fit = BACKGROUND_FITS.find((known) => known === block.fit);
+      if (fit) {
+         background.fit = fit;
+      }
+      return background;
    }
 
    categoryKey(root: Record<string, unknown>, name: string): string | undefined {

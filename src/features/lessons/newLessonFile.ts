@@ -1,6 +1,6 @@
 import * as path from "path";
 import * as vscode from "vscode";
-import { LIBRARY_FILE, type Node } from "../../contracts";
+import { isLibraryFile, LIBRARY_FILE, type Node } from "../../contracts";
 import type { FeatureContext } from "../../extension";
 import { exists, toRelative } from "../../library/files";
 import { DEFAULT_LESSON_EXTENSION } from "../../library/running";
@@ -23,7 +23,7 @@ export async function newLessonFile(ctx: FeatureContext, node: Option<Node>): Pr
          if (invalid.some) {
             return invalid.value;
          }
-         return value.trim().toLowerCase() === LIBRARY_FILE ? `${LIBRARY_FILE} is the library itself` : "";
+         return isLibraryFile(value.trim()) ? `${value.trim()} is a library file` : "";
       },
    });
    if (!typed.some) {

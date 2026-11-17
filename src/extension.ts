@@ -1,11 +1,12 @@
 import * as vscode from "vscode";
-import { LIBRARY_FILE, type Node, type ViewMode } from "./contracts";
+import { LIBRARY_GLOB, type Node, type ViewMode } from "./contracts";
 import { register as registerCards } from "./features/cards";
 import { register as registerCategories } from "./features/categories";
 import { register as registerFilter } from "./features/filter";
 import { register as registerHover } from "./features/hover";
 import { register as registerLessons } from "./features/lessons";
 import { register as registerRows } from "./features/rows";
+import { register as registerShelf } from "./features/shelf";
 import { register as registerView } from "./features/view";
 import { applyRenames } from "./library/files";
 import { loadIconCatalog } from "./library/icons";
@@ -38,7 +39,7 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
       clearTimeout(timer);
       timer = setTimeout(() => void tree.load(), 200);
    };
-   const watcher = vscode.workspace.createFileSystemWatcher(`**/${LIBRARY_FILE}`);
+   const watcher = vscode.workspace.createFileSystemWatcher(LIBRARY_GLOB);
    watcher.onDidCreate(scheduleLoad);
    watcher.onDidChange(scheduleLoad);
    watcher.onDidDelete(scheduleLoad);
@@ -106,6 +107,7 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
    registerCategories(ctx);
    registerRows(ctx);
    registerHover(ctx);
+   registerShelf(ctx);
 
    applyMode();
    await reload();
