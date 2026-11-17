@@ -128,7 +128,7 @@ The Graph page draws every card as a node, with an arrow from a card to each car
 - A dependency that would make a loop is refused.
 - Drag a card to move it, drag the background to pan, scroll to zoom. Fit shows everything; Auto Layout forgets the dragged positions and arranges the cards in levels again.
 - Click a card to open its page. The page lists what the card builds on and what needs it, as links.
-- Searching keeps the cards that match, everything they build on and everything built on them. A card whose name is exactly the search text wins over partial matches, so "If" does not also bring in "ElseIf".
+- Searching keeps the cards that match, everything they build on and everything built on them. A card whose name is exactly the search text wins over partial matches, so "If" does not also bring in "ElseIf". While a search is active the cards that remain glide into a tidy tree of their own, whatever places they were dragged to; clearing the search glides every card back to where it was. Moving cards during a search is not saved.
 - The filters, the card style and the background apply here as they do on the shelves. Two more choices sit on the page itself: the direction of the arrows (top to bottom or left to right) and their shape (curved, straight or elbow).
 
 Everything is stored in the library file. A card lists what it builds on in `dependsOn`, its dragged place in `position`, and the page's own choices are under `$graph`. Renaming a card file inside VS Code updates the cards that depend on it.

@@ -14,7 +14,21 @@
    const SIBLING_GAP = 26; // between cards on the same level
    const CLICK_SLOP = 4; // pointer travel below this is a click, not a drag
 
+   const MOVE_MS = 320; // how long cards take to glide to a new arrangement
+
    let fitNext = false;
+
+   // What was on screen after the last draw, so the next draw can glide from it.
+   const last = {
+      positions: new Map(),
+      view: null,
+      searching: false,
+      viewBeforeSearch: null,
+      frame: 0,
+   };
+
+   const reducedMotion = () => window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+   const ease = (t) => 1 - Math.pow(1 - t, 3);
 
    function svgEl(name, attrs) {
       const node = document.createElementNS(SVG_NS, name);
@@ -33,7 +47,7 @@
 
    // Cards with a saved position keep it. The rest are placed in levels: a card sits one
    // level after the deepest card it builds on, ordered to keep arrows short.
-   function layout(entries, needs, size, direction) {
+   function layout(entries, needs, size, direction, useSaved) {
       const depth = new Map();
       const walking = new Set();
       const depthOf = (key) => {
@@ -79,7 +93,7 @@
          for (const card of level) {
             across.set(card.key, cursor);
             const auto = down ? { x: cursor, y: index * step } : { x: index * step, y: cursor };
-            const saved = card.position;
+            const saved = useSaved ? card.position : undefined;
             positions.set(card.key, saved ? { x: saved.x, y: saved.y } : { x: Math.round(auto.x), y: Math.round(auto.y) });
             cursor += span + SIBLING_GAP;
          }
@@ -169,10 +183,18 @@
       const shown = (key) => !visible || visible.has(key);
       app.setCount(visible ? `${visible.size} of ${app.plural(entries.length, "card")}` : app.plural(entries.length, "card"));
 
-      const positions = layout(entries, needs, size, options.direction);
-      const view = app.graphView() || { x: 0, y: 0, k: 1 };
-      const needsFit = fitNext || !app.graphView();
+      // While searching, what is left is arranged afresh as a tidy tree, ignoring dragged
+      // places. Clearing the search puts every card back where it was.
+      const searching = visible !== null;
+      const shownEntries = entries.filter(({ card }) => shown(card.key));
+      const shownNeeds = new Map(shownEntries.map(({ card }) => [card.key, needs.get(card.key).filter(shown)]));
+      const targets = searching ? layout(shownEntries, shownNeeds, size, options.direction, false) : layout(entries, needs, size, options.direction, true);
+      // Cards start from where they were last drawn and glide to their target.
+      const positions = new Map([...targets].map(([key, at]) => [key, { ...(last.positions.get(key) || at) }]));
+      const view = { ...(last.view || app.graphView() || { x: 0, y: 0, k: 1 }) };
+      const needsFit = fitNext || (!last.view && !app.graphView());
       fitNext = false;
+      cancelAnimationFrame(last.frame);
 
       const page = app.el("div", "graph-page");
       const graph = app.el("div", `graph graph-${options.direction}`);
@@ -278,23 +300,38 @@
          nodeEls.set(card.key, node);
       }
 
-      function fit() {
+      // The pan and zoom that shows every drawn card at the given places.
+      function viewFor(places) {
          const box = graph.getBoundingClientRect();
          const keys = [...nodeEls.keys()];
          if (!keys.length || !box.width || !box.height) {
-            return;
+            return null;
          }
-         const xs = keys.map((key) => positions.get(key).x);
-         const ys = keys.map((key) => positions.get(key).y);
+         const xs = keys.map((key) => places.get(key).x);
+         const ys = keys.map((key) => places.get(key).y);
          const minX = Math.min(...xs) - size.w / 2;
          const maxX = Math.max(...xs) + size.w / 2;
          const minY = Math.min(...ys) - size.h / 2;
          const maxY = Math.max(...ys) + size.h / 2;
-         view.k = Math.max(0.2, Math.min(box.width / (maxX - minX + 90), box.height / (maxY - minY + 110), 1.15));
-         view.x = box.width / 2 - ((minX + maxX) / 2) * view.k;
-         view.y = box.height / 2 - ((minY + maxY) / 2) * view.k;
-         applyView();
-         app.setGraphView(view);
+         const k = Math.max(0.2, Math.min(box.width / (maxX - minX + 90), box.height / (maxY - minY + 110), 1.15));
+         return { k, x: box.width / 2 - ((minX + maxX) / 2) * k, y: box.height / 2 - ((minY + maxY) / 2) * k };
+      }
+
+      // The view is only remembered outside a search, so a search never overwrites it.
+      function keepView() {
+         last.view = { ...view };
+         if (!searching) {
+            app.setGraphView(view);
+         }
+      }
+
+      function fit() {
+         const next = viewFor(positions);
+         if (next) {
+            Object.assign(view, next);
+            applyView();
+            keepView();
+         }
       }
 
       // ---------- pointer: move a card, pan, or pull a new arrow ----------
@@ -354,10 +391,14 @@
          graph.classList.remove("dragging");
          dragLine.style.display = "none";
          if (done.mode === "pan") {
-            app.setGraphView(view);
+            keepView();
          } else if (done.mode === "node") {
             if (done.travel <= CLICK_SLOP) {
                app.openCard(done.key);
+               return;
+            }
+            // The arrangement shown during a search is temporary, so nothing is saved from it.
+            if (searching) {
                return;
             }
             // Every card's place is saved, so the ones that were never dragged stay put too.
@@ -389,7 +430,7 @@
             view.y = py - ((py - view.y) / view.k) * k;
             view.k = k;
             applyView();
-            app.setGraphView(view);
+            keepView();
          },
          { passive: false },
       );
@@ -435,12 +476,61 @@
       }
       host.append(page);
 
-      drawEdges();
-      if (needsFit) {
-         fit();
-      } else {
-         applyView();
+      // Where the view should end up: around the tree while searching, back where it was
+      // when the search is cleared, fitted on first show, and otherwise left alone.
+      let targetView = { ...view };
+      if (searching) {
+         if (!last.searching) {
+            last.viewBeforeSearch = { ...view };
+         }
+         targetView = viewFor(targets) || targetView;
+      } else if (last.searching && last.viewBeforeSearch) {
+         targetView = last.viewBeforeSearch;
+      } else if (needsFit) {
+         targetView = viewFor(targets) || targetView;
       }
+
+      const glide = !reducedMotion() && last.positions.size > 0 && (searching || last.searching);
+      const fromView = { ...view };
+      const fromPositions = new Map([...positions].map(([key, at]) => [key, { ...at }]));
+      const draw = (t) => {
+         for (const [key, target] of targets) {
+            const from = fromPositions.get(key);
+            const at = positions.get(key);
+            at.x = from.x + (target.x - from.x) * t;
+            at.y = from.y + (target.y - from.y) * t;
+            const node = nodeEls.get(key);
+            if (node) {
+               place(node, key);
+            }
+         }
+         view.x = fromView.x + (targetView.x - fromView.x) * t;
+         view.y = fromView.y + (targetView.y - fromView.y) * t;
+         view.k = fromView.k + (targetView.k - fromView.k) * t;
+         drawEdges();
+         applyView();
+         last.view = { ...view };
+      };
+
+      last.positions = positions;
+      last.searching = searching;
+      if (!glide) {
+         draw(1);
+         keepView();
+         return;
+      }
+      const started = performance.now();
+      const step = (now) => {
+         const t = Math.min(1, (now - started) / MOVE_MS);
+         draw(ease(t));
+         if (t < 1) {
+            last.frame = requestAnimationFrame(step);
+         } else {
+            keepView();
+         }
+      };
+      draw(0);
+      last.frame = requestAnimationFrame(step);
    }
 
    window.ShelfGraph = {
