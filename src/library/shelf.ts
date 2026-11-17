@@ -1,6 +1,7 @@
 import * as path from "path";
 import type { Card, Category, Lesson, Node, ShelfCard, ShelfLesson, ShelfModel, ShelfRef } from "../contracts";
 import { parsers } from "../parsers";
+import { dependenciesOf, positionOf } from "./graph";
 import { isRunnable } from "./running";
 
 // The shelf view of one library file: its categories as shelves and its cards as tiles.
@@ -64,6 +65,8 @@ function toShelfCard(card: Card): ShelfCard {
       exists: card.exists,
       runnable: isRunnable(card.uri.fsPath),
       lessons: card.lessons.map(toShelfLesson),
+      dependsOn: dependenciesOf(card.meta),
+      position: positionOf(card.meta),
    };
 }
 

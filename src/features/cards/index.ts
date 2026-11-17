@@ -7,6 +7,7 @@ import { moveToCategory } from "./moveToCategory";
 import { newCard } from "./newCard";
 import { newCardFile } from "./newCardFile";
 import { removeCards } from "./removeCard";
+import { setDependencies } from "./setDependencies";
 
 export { removeCards } from "./removeCard";
 
@@ -16,6 +17,7 @@ export function register(ctx: FeatureContext): void {
       vscode.commands.registerCommand("library.newCard", (node?: Node) => newCard(ctx, option(node))),
       vscode.commands.registerCommand("library.newCardFile", (node?: Node) => newCardFile(ctx, option(node))),
       vscode.commands.registerCommand("library.moveToCategory", (node?: Node) => moveToCategory(ctx, option(node))),
+      vscode.commands.registerCommand("library.setDependencies", (node?: Node) => setDependencies(ctx, option(node))),
       vscode.commands.registerCommand("library.removeCard", (node?: Node) => removeCards(ctx, option(node))),
    );
 }

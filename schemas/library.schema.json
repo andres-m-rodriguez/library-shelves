@@ -23,6 +23,23 @@
         "$ref": "#/definitions/fileType"
       }
     },
+    "$graph": {
+      "type": "object",
+      "description": "Optional look of the graph page, where cards are drawn with arrows from what they depend on.",
+      "additionalProperties": false,
+      "properties": {
+        "direction": {
+          "type": "string",
+          "description": "Which way the arrows run. Defaults to down.",
+          "enum": ["down", "right"]
+        },
+        "edges": {
+          "type": "string",
+          "description": "How the arrows are drawn. Defaults to curved.",
+          "enum": ["curved", "straight", "elbow"]
+        }
+      }
+    },
     "$background": {
       "type": "object",
       "description": "Optional picture shown behind the shelves when the library file is opened.",
@@ -118,6 +135,26 @@
         },
         "row": {
           "$ref": "#/definitions/row"
+        },
+        "dependsOn": {
+          "type": "array",
+          "description": "The cards this card builds on, by their key in this file. Drawn as arrows on the graph page.",
+          "items": {
+            "type": "string"
+          }
+        },
+        "position": {
+          "type": "object",
+          "description": "Where the card sits on the graph page after it was dragged. Written by the extension.",
+          "additionalProperties": false,
+          "properties": {
+            "x": {
+              "type": "number"
+            },
+            "y": {
+              "type": "number"
+            }
+          }
         }
       },
       "defaultSnippets": [

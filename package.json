@@ -129,6 +129,12 @@
         "icon": "$(folder-opened)"
       },
       {
+        "command": "library.setDependencies",
+        "title": "Set Dependencies...",
+        "category": "Library",
+        "icon": "$(type-hierarchy)"
+      },
+      {
         "command": "library.setColor",
         "title": "Set Color...",
         "category": "Library",
@@ -376,6 +382,11 @@
           "group": "2_edit@3"
         },
         {
+          "command": "library.setDependencies",
+          "when": "view == libraryShelves && viewItem == card",
+          "group": "2_edit@7"
+        },
+        {
           "command": "library.setColor",
           "when": "view == libraryShelves && (viewItem == category || viewItem == card || viewItem == lesson)",
           "group": "2_edit@4"
@@ -426,6 +437,10 @@
         },
         {
           "command": "library.setColor",
+          "when": "false"
+        },
+        {
+          "command": "library.setDependencies",
           "when": "false"
         },
         {

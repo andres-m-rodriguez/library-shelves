@@ -8,6 +8,33 @@ export type CardStyle = (typeof CARD_STYLES)[number];
 export const DEFAULT_CARD_STYLE: CardStyle = "classic";
 export const CARD_STYLE_SETTING = "cardStyle";
 
+export const GRAPH_KEY = "$graph";
+
+// The graph page draws cards as nodes and their dependencies as arrows. "down" puts what
+// a card builds on above it, "right" puts it to the left.
+export const GRAPH_DIRECTIONS = ["down", "right"] as const;
+export type GraphDirection = (typeof GRAPH_DIRECTIONS)[number];
+export const GRAPH_EDGES = ["curved", "straight", "elbow"] as const;
+export type GraphEdges = (typeof GRAPH_EDGES)[number];
+
+export const DEFAULT_GRAPH_DIRECTION: GraphDirection = "down";
+export const DEFAULT_GRAPH_EDGES: GraphEdges = "curved";
+
+export interface GraphMeta {
+   direction?: GraphDirection;
+   edges?: GraphEdges;
+}
+
+export interface ShelfGraph {
+   direction: GraphDirection;
+   edges: GraphEdges;
+}
+
+export interface Point {
+   x: number;
+   y: number;
+}
+
 export const BACKGROUND_FITS = ["cover", "contain", "tile"] as const;
 export type BackgroundFit = (typeof BACKGROUND_FITS)[number];
 
@@ -48,6 +75,8 @@ export interface ShelfCard {
    exists: boolean;
    runnable: boolean;
    lessons: ShelfLesson[];
+   dependsOn: string[];
+   position?: Point;
 }
 
 export interface ShelfCategory {
@@ -77,6 +106,7 @@ export const SHELF_ACTIONS = [
    "moveToCategory",
    "setIcon",
    "setColor",
+   "setDependencies",
    "renameCategory",
    "removeCard",
    "removeLesson",
@@ -92,4 +122,10 @@ export type ShelfMessage =
    | { type: "openText" }
    | { type: "background" }
    | { type: "cardStyle"; style: CardStyle }
+   | { type: "positions"; positions: Record<string, Point> }
+   | { type: "resetLayout" }
+   | { type: "link"; prerequisite: string; card: string }
+   | { type: "unlink"; prerequisite: string; card: string }
+   | { type: "graphDirection"; value: GraphDirection }
+   | { type: "graphEdges"; value: GraphEdges }
    | { type: "action"; action: ShelfAction; ref: ShelfRef };

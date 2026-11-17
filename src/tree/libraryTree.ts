@@ -13,6 +13,7 @@ import {
    type Day,
    type DragRef,
    type FileTypeMeta,
+   type GraphMeta,
    type HoverRef,
    type IconCatalog,
    type Lesson,
@@ -89,6 +90,7 @@ export class LibraryTree
    fileTypes = new Map<string, Record<string, FileTypeMeta>>();
    // Keyed by the lower-cased path of the library file.
    backgrounds = new Map<string, BackgroundMeta>();
+   graphs = new Map<string, GraphMeta>();
 
    refresh(): void {
       this.changed.fire(undefined);
@@ -110,11 +112,15 @@ export class LibraryTree
       const jsonFiles = await vscode.workspace.findFiles(LIBRARY_GLOB, "**/node_modules/**");
       this.fileTypes.clear();
       this.backgrounds.clear();
+      this.graphs.clear();
 
       for (const jsonUri of jsonFiles) {
          const folder = path.dirname(jsonUri.fsPath);
          const mapping = await readMapping(jsonUri);
          this.fileTypes.set(jsonUri.fsPath, mapping.fileTypes);
+         if (mapping.graph) {
+            this.graphs.set(jsonUri.fsPath.toLowerCase(), mapping.graph);
+         }
          if (mapping.background) {
             this.backgrounds.set(jsonUri.fsPath.toLowerCase(), mapping.background);
          }

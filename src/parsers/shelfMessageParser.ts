@@ -1,4 +1,4 @@
-import { CARD_STYLES, type CardStyle, SHELF_ACTIONS, type ShelfAction, type ShelfMessage, type ShelfRef } from "../contracts";
+import { CARD_STYLES, type CardStyle, GRAPH_DIRECTIONS, GRAPH_EDGES, type Point, SHELF_ACTIONS, type ShelfAction, type ShelfMessage, type ShelfRef } from "../contracts";
 
 export class ShelfMessageParser {
    parse(value: unknown): ShelfMessage | undefined {
@@ -11,10 +11,28 @@ export class ShelfMessageParser {
          case "newCategory":
          case "openText":
          case "background":
+         case "resetLayout":
             return { type: value.type };
          case "cardStyle": {
             const style = this.cardStyle(value.style);
             return style ? { type: "cardStyle", style } : undefined;
+         }
+         case "link":
+         case "unlink":
+            return typeof value.prerequisite === "string" && typeof value.card === "string"
+               ? { type: value.type, prerequisite: value.prerequisite, card: value.card }
+               : undefined;
+         case "positions": {
+            const positions = this.positions(value.positions);
+            return positions ? { type: "positions", positions } : undefined;
+         }
+         case "graphDirection": {
+            const direction = GRAPH_DIRECTIONS.find((known) => known === value.value);
+            return direction ? { type: "graphDirection", value: direction } : undefined;
+         }
+         case "graphEdges": {
+            const edges = GRAPH_EDGES.find((known) => known === value.value);
+            return edges ? { type: "graphEdges", value: edges } : undefined;
          }
          case "action": {
             const ref = this.parseRef(value.ref);
@@ -39,6 +57,20 @@ export class ShelfMessageParser {
          return { kind: "lesson", cardKey: value.cardKey, name: value.name };
       }
       return undefined;
+   }
+
+   // Card key to the center of its node. Anything that is not a finite pair is dropped.
+   positions(value: unknown): Record<string, Point> | undefined {
+      if (!isRecord(value)) {
+         return undefined;
+      }
+      const positions: Record<string, Point> = {};
+      for (const [key, raw] of Object.entries(value)) {
+         if (isRecord(raw) && typeof raw.x === "number" && typeof raw.y === "number" && Number.isFinite(raw.x) && Number.isFinite(raw.y)) {
+            positions[key] = { x: Math.round(raw.x), y: Math.round(raw.y) };
+         }
+      }
+      return positions;
    }
 
    cardStyle(value: unknown): CardStyle | undefined {

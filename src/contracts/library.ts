@@ -1,6 +1,6 @@
 import type { FileTypeMeta, PreviewValue } from "./preview";
 import type { RowSetting } from "./row";
-import type { BackgroundMeta } from "./shelf";
+import type { BackgroundMeta, GraphMeta } from "./shelf";
 
 export const LIBRARY_FILE = "library.shelf";
 export const LEGACY_LIBRARY_FILE = "library.json";
@@ -37,6 +37,8 @@ export interface CardMeta {
    lessons?: LessonMeta[];
    preview?: PreviewValue;
    row?: RowSetting;
+   dependsOn?: string[];
+   position?: { x: number; y: number };
 }
 
 export interface CategoryMeta {
@@ -53,6 +55,7 @@ export interface LibraryFile {
    categories: Record<string, CategoryMeta>;
    fileTypes: Record<string, FileTypeMeta>;
    background?: BackgroundMeta;
+   graph?: GraphMeta;
 }
 
 export type JsonPath = (string | number)[];

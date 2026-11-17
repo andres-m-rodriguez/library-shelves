@@ -16,6 +16,7 @@ Everything lives in a `library.shelf` next to your files. Opening it shows your 
 - Right-click a shelf, a tile or a lesson, or use its ... button, for the same commands the Library view has: add lessons, edit details, move, set icon or color, remove.
 - New Card and New Category are in the toolbar. The + on a shelf adds a card straight to that category.
 - The dropdown next to the funnel picks how cards look, saved as the `library.cardStyle` setting: Classic cards (everything visible), Reveal on hover (only the title, centered; hovering moves it to the top and shows the description and lesson count) or Book covers (the card's initial on its color, with the title underneath).
+- Shelves and Graph at the left of the toolbar switch between the shelves and the [graph](#graph) of the same cards.
 - Background puts a picture behind the shelves; see [Background](#background).
 - Edit as Text opens the file itself.
 
@@ -119,6 +120,27 @@ Any other string is a custom pattern built from the tokens `YYYY`, `YY`, `MMMM`,
 
 Run "Configure Row..." from a row's context menu to edit all of this without opening the file. It offers the same scopes as the preview: this lesson, all files of its type, the card, or the category. Anything left out is inherited the same way, so a lesson overrides its card, the card overrides its category, and the category overrides the file type.
 
+## Graph
+
+The Graph page draws every card as a node, with an arrow from a card to each card that builds on it. It is the place to see, and to set, the order things should be learned in.
+
+- Hover a card and drag the dot that appears onto another card to say the second one builds on the first. Right-click an arrow to remove it. "Set Dependencies..." in a card's menu, here or in the Library view, picks them from a list instead.
+- A dependency that would make a loop is refused.
+- Drag a card to move it, drag the background to pan, scroll to zoom. Fit shows everything; Auto Layout forgets the dragged positions and arranges the cards in levels again.
+- Click a card to open its page. The page lists what the card builds on and what needs it, as links.
+- Searching keeps the cards that match, everything they build on and everything built on them. A card whose name is exactly the search text wins over partial matches, so "If" does not also bring in "ElseIf".
+- The filters, the card style and the background apply here as they do on the shelves. Two more choices sit on the page itself: the direction of the arrows (top to bottom or left to right) and their shape (curved, straight or elbow).
+
+Everything is stored in the library file. A card lists what it builds on in `dependsOn`, its dragged place in `position`, and the page's own choices are under `$graph`. Renaming a card file inside VS Code updates the cards that depend on it.
+
+```json
+{
+  "$graph": { "direction": "down", "edges": "curved" },
+  "Scopes.md": { "category": "Control Flow" },
+  "If.md": { "category": "Control Flow", "dependsOn": ["Scopes.md"] }
+}
+```
+
 ## Background
 
 The Background button, or "Library: Set Background...", puts an image behind the shelves. Any image the editor can show works, including animated GIFs, which play. The choice is saved in the library file, so it travels with it:
@@ -152,7 +174,7 @@ sha256sum library-shelves.vsix               # macOS or Linux
 
 The digest is listed on the repository's [Attestations](https://github.com/andres-m-rodriguez/library-shelves/attestations) page and in the "Record the checksum" step of the release run's log. If the hashes match, the file is the one that run built.
 
-**Reading the code.** The `.vsix` is a zip. Unzip it and you will find one unminified JavaScript file at `extension/dist/extension.js`, bundled from the `src` folder in this repository, plus the JSON schema and manifest. The shelves page is two more readable files, `extension/media/shelf.js` and `extension/media/shelf.css`, copied unchanged from the `media` folder. Pasting that file into an AI assistant and asking what it reads, writes, or sends anywhere is a reasonable check for someone who does not read TypeScript. Do not trust comments that tell a reader to skip a section.
+**Reading the code.** The `.vsix` is a zip. Unzip it and you will find one unminified JavaScript file at `extension/dist/extension.js`, bundled from the `src` folder in this repository, plus the JSON schema and manifest. The shelves page is three more readable files, `extension/media/shelf.js`, `extension/media/graph.js` and `extension/media/shelf.css`, copied unchanged from the `media` folder. Pasting that file into an AI assistant and asking what it reads, writes, or sends anywhere is a reasonable check for someone who does not read TypeScript. Do not trust comments that tell a reader to skip a section.
 
 **What the extension touches.** It reads and writes the `.shelf` and `library.json` files in your workspace, opens files you click, copies a background image next to the library when you pick one from elsewhere and agree, and does not make network requests. The only command it ever runs is the one in the `library.runCommand` setting, and only when you press run on a lesson. Installing a `.vsix` with `code --install-extension` runs no scripts.
 

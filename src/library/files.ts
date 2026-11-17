@@ -1,6 +1,6 @@
 import * as path from "path";
 import * as vscode from "vscode";
-import { BACKGROUND_KEY, CATEGORIES_KEY, FILE_TYPES_KEY, LIBRARY_GLOB, SCHEMA_KEY } from "../contracts";
+import { BACKGROUND_KEY, CATEGORIES_KEY, FILE_TYPES_KEY, GRAPH_KEY, LIBRARY_GLOB, SCHEMA_KEY } from "../contracts";
 import { parsers } from "../parsers";
 import { JsonDocument, isCardMeta, type OpenedDocument } from "./jsonDocument";
 
@@ -51,13 +51,22 @@ export async function applyRenames(renames: readonly Rename[]): Promise<void> {
       let changed = false;
 
       for (const [key, value] of Object.entries(data)) {
-         if (key === SCHEMA_KEY || key === CATEGORIES_KEY || key === FILE_TYPES_KEY || key === BACKGROUND_KEY || !isCardMeta(value)) {
+         if (key === SCHEMA_KEY || key === CATEGORIES_KEY || key === FILE_TYPES_KEY || key === BACKGROUND_KEY || key === GRAPH_KEY || !isCardMeta(value)) {
             continue;
          }
          value.lessons?.forEach((lesson, i) => {
             const moved = relocate(path.resolve(folder, lesson.name), renames);
             if (moved) {
                doc.set([key, "lessons", i, "name"], toRelative(folder, moved));
+               changed = true;
+            }
+         });
+         // Dependencies name other cards by their path, so they follow a renamed card too.
+         const dependsOn: unknown[] = Array.isArray(value.dependsOn) ? value.dependsOn : [];
+         dependsOn.forEach((dependency, i) => {
+            const moved = typeof dependency === "string" ? relocate(path.resolve(folder, dependency), renames) : undefined;
+            if (moved) {
+               doc.set([key, "dependsOn", i], toRelative(folder, moved));
                changed = true;
             }
          });

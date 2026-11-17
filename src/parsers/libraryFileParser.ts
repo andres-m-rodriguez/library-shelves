@@ -3,6 +3,10 @@ import {
    BACKGROUND_FITS,
    BACKGROUND_KEY,
    type BackgroundMeta,
+   GRAPH_DIRECTIONS,
+   GRAPH_EDGES,
+   GRAPH_KEY,
+   type GraphMeta,
    CATEGORIES_KEY,
    FILE_TYPES_KEY,
    SCHEMA_KEY,
@@ -57,6 +61,14 @@ export class LibraryFileParser {
             }
             continue;
          }
+         if (key === GRAPH_KEY) {
+            if (isPlainObject(raw)) {
+               value.graph = this.graphOf(root);
+            } else {
+               issues.push({ message: `${GRAPH_KEY} must be an object` });
+            }
+            continue;
+         }
          if (this.isCardMeta(raw)) {
             value.cards[key] = raw;
          } else {
@@ -68,7 +80,7 @@ export class LibraryFileParser {
 
    *cards(root: Record<string, unknown>): IterableIterator<[string, CardMeta]> {
       for (const [key, raw] of Object.entries(root)) {
-         if (key !== SCHEMA_KEY && key !== CATEGORIES_KEY && key !== FILE_TYPES_KEY && key !== BACKGROUND_KEY && this.isCardMeta(raw)) {
+         if (key !== SCHEMA_KEY && key !== CATEGORIES_KEY && key !== FILE_TYPES_KEY && key !== BACKGROUND_KEY && key !== GRAPH_KEY && this.isCardMeta(raw)) {
             yield [key, raw];
          }
       }
@@ -106,6 +118,24 @@ export class LibraryFileParser {
          background.fit = fit;
       }
       return background;
+   }
+
+   // Keeps only the graph settings that are usable.
+   graphOf(root: Record<string, unknown>): GraphMeta {
+      const block = root[GRAPH_KEY];
+      const graph: GraphMeta = {};
+      if (!isPlainObject(block)) {
+         return graph;
+      }
+      const direction = GRAPH_DIRECTIONS.find((known) => known === block.direction);
+      if (direction) {
+         graph.direction = direction;
+      }
+      const edges = GRAPH_EDGES.find((known) => known === block.edges);
+      if (edges) {
+         graph.edges = edges;
+      }
+      return graph;
    }
 
    categoryKey(root: Record<string, unknown>, name: string): string | undefined {

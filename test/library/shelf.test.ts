@@ -48,6 +48,8 @@ describe("buildShelf", () => {
                      color: "var(--vscode-charts-blue)",
                      exists: true,
                      runnable: false,
+                     dependsOn: [],
+                     position: undefined,
                      lessons: [
                         { name: "lessons/Block.cs", label: "Block scope", fileName: "Block.cs", detail: "Braces", tags: ["scope"], color: "", exists: true, runnable: true },
                         { name: "notes.txt", label: "notes.txt", fileName: "notes.txt", detail: "", tags: [], color: "", exists: false, runnable: false },

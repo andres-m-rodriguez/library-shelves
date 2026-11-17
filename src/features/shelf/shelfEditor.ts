@@ -7,9 +7,12 @@ import {
    DEFAULT_BACKGROUND_DIM,
    DEFAULT_BACKGROUND_FIT,
    DEFAULT_CARD_STYLE,
+   DEFAULT_GRAPH_DIRECTION,
+   DEFAULT_GRAPH_EDGES,
    type Node,
    type ShelfAction,
    type ShelfBackground,
+   type ShelfGraph,
    type ShelfMessage,
    type ShelfRef,
 } from "../../contracts";
@@ -17,6 +20,7 @@ import type { FeatureContext } from "../../extension";
 import { buildShelf, resolveShelfRef } from "../../library/shelf";
 import { none, option, orElse, some, type Option } from "../../option";
 import { parsers } from "../../parsers";
+import { link, resetLayout, savePositions, setGraphOption, unlink } from "./graphEdits";
 import { EMPTY_LIBRARY } from "./newLibrary";
 
 type NodeAction = Exclude<ShelfAction, "open" | "run">;
@@ -29,6 +33,7 @@ const COMMANDS: Record<NodeAction, string> = {
    moveToCategory: "library.moveToCategory",
    setIcon: "library.setIcon",
    setColor: "library.setColor",
+   setDependencies: "library.setDependencies",
    renameCategory: "library.renameCategory",
    removeCard: "library.removeCard",
    removeLesson: "library.removeLesson",
@@ -77,6 +82,7 @@ export class ShelfEditor implements vscode.CustomTextEditorProvider {
          ...shelf,
          background: this.background(document, webview),
          cardStyle: cardStyleSetting(),
+         graph: this.graph(document),
          fileName: path.basename(document.uri.fsPath),
          inWorkspace: option(vscode.workspace.getWorkspaceFolder(document.uri)).some,
       };
@@ -102,6 +108,14 @@ export class ShelfEditor implements vscode.CustomTextEditorProvider {
       };
    }
 
+   private graph(document: vscode.TextDocument): ShelfGraph {
+      const meta = orElse(option(this.ctx.tree.graphs.get(document.uri.fsPath.toLowerCase())), {});
+      return {
+         direction: orElse(option(meta.direction), DEFAULT_GRAPH_DIRECTION),
+         edges: orElse(option(meta.edges), DEFAULT_GRAPH_EDGES),
+      };
+   }
+
    private async handle(document: vscode.TextDocument, message: ShelfMessage, send: () => void): Promise<void> {
       switch (message.type) {
          case "ready":
@@ -121,6 +135,24 @@ export class ShelfEditor implements vscode.CustomTextEditorProvider {
             return;
          case "openText":
             await vscode.commands.executeCommand("vscode.openWith", document.uri, "default");
+            return;
+         case "positions":
+            await savePositions(this.ctx, document.uri, message.positions);
+            return;
+         case "resetLayout":
+            await resetLayout(this.ctx, document.uri);
+            return;
+         case "link":
+            await link(this.ctx, document.uri, message.prerequisite, message.card);
+            return;
+         case "unlink":
+            await unlink(this.ctx, document.uri, message.prerequisite, message.card);
+            return;
+         case "graphDirection":
+            await setGraphOption(this.ctx, document.uri, "direction", message.value);
+            return;
+         case "graphEdges":
+            await setGraphOption(this.ctx, document.uri, "edges", message.value);
             return;
          case "action":
             await this.act(document, message.action, message.ref);
@@ -163,6 +195,7 @@ function fileOf(node: Node): Option<vscode.Uri> {
 
 function pageHtml(webview: vscode.Webview, media: vscode.Uri): string {
    const script = webview.asWebviewUri(vscode.Uri.joinPath(media, "shelf.js")).toString();
+   const graphScript = webview.asWebviewUri(vscode.Uri.joinPath(media, "graph.js")).toString();
    const style = webview.asWebviewUri(vscode.Uri.joinPath(media, "shelf.css")).toString();
    const nonce = randomBytes(16).toString("hex");
    return `<!DOCTYPE html>
@@ -175,6 +208,10 @@ function pageHtml(webview: vscode.Webview, media: vscode.Uri): string {
 </head>
 <body>
    <header id="toolbar">
+      <div id="pages" role="tablist" aria-label="Page">
+         <button id="page-shelves" role="tab">Shelves</button>
+         <button id="page-graph" role="tab">Graph</button>
+      </div>
       <input id="search" type="text" placeholder="Search cards and lessons" spellcheck="false" aria-label="Search cards and lessons">
       <button id="filter" title="Filter the shelves" aria-label="Filter the shelves" aria-haspopup="true" aria-expanded="false">
          <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"><path d="M1.5 2h13L9.5 8.2V13l-3 1.5V8.2z"/></svg>
@@ -196,6 +233,7 @@ function pageHtml(webview: vscode.Webview, media: vscode.Uri): string {
    <main id="shelves"></main>
    <div id="filter-panel" role="dialog" aria-label="Filter the shelves" hidden></div>
    <div id="menu" role="menu" hidden></div>
+   <script nonce="${nonce}" src="${graphScript}"></script>
    <script nonce="${nonce}" src="${script}"></script>
 </body>
 </html>`;

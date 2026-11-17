@@ -810,3 +810,300 @@ body.has-bg #count {
       transform: none;
    }
 }
+/* ---------- page switch ---------- */
+
+#pages {
+   display: flex;
+   border: 1px solid var(--vscode-button-border, var(--vscode-editorWidget-border, rgba(128, 128, 128, 0.35)));
+   border-radius: 3px;
+   overflow: hidden;
+}
+
+#toolbar #pages button {
+   border: none;
+   border-radius: 0;
+}
+
+#toolbar #pages button[aria-selected="true"] {
+   color: var(--vscode-button-foreground);
+   background: var(--vscode-button-background);
+}
+
+/* ---------- relations on a card page ---------- */
+
+.relations {
+   display: flex;
+   flex-direction: column;
+   gap: 6px;
+   margin-top: 18px;
+}
+
+.relation-row {
+   display: flex;
+   flex-wrap: wrap;
+   align-items: center;
+   gap: 6px;
+}
+
+.relation-title {
+   min-width: 5.5em;
+   color: var(--vscode-descriptionForeground);
+   font-size: 0.9em;
+}
+
+/* ---------- graph page ---------- */
+
+#shelves.graph-mode {
+   position: relative;
+   padding: 0;
+   overflow: hidden;
+}
+
+.graph-page,
+.graph {
+   position: absolute;
+   inset: 0;
+}
+
+.graph {
+   overflow: hidden;
+   cursor: grab;
+   user-select: none;
+   touch-action: none;
+}
+
+.graph.dragging {
+   cursor: grabbing;
+}
+
+.graph-world {
+   position: absolute;
+   top: 0;
+   left: 0;
+   transform-origin: 0 0;
+}
+
+.graph-edges {
+   position: absolute;
+   top: 0;
+   left: 0;
+   overflow: visible;
+}
+
+.gedge {
+   fill: none;
+   stroke: var(--vscode-descriptionForeground);
+   stroke-width: 1.5;
+   pointer-events: none;
+}
+
+.gedge-hit {
+   fill: none;
+   stroke: transparent;
+   stroke-width: 14;
+   cursor: context-menu;
+}
+
+.gedge-head {
+   fill: var(--vscode-descriptionForeground);
+}
+
+.gedge-group.lit .gedge,
+.gedge-group:hover .gedge {
+   stroke: var(--vscode-focusBorder);
+   stroke-width: 2.5;
+}
+
+.gedge-new {
+   stroke: var(--vscode-focusBorder);
+   stroke-dasharray: 6 4;
+}
+
+/* A node is a small tile, so it shares the tile's look in every card style. */
+
+.gnode {
+   --accent: var(--vscode-editorWidget-border, rgba(128, 128, 128, 0.35));
+   position: absolute;
+   display: flex;
+   flex-direction: column;
+   justify-content: center;
+   box-sizing: border-box;
+   padding: 6px 10px 6px 12px;
+   background: var(--vscode-editorWidget-background);
+   border: 1px solid var(--vscode-editorWidget-border, var(--vscode-widget-border, rgba(128, 128, 128, 0.35)));
+   border-left: 4px solid var(--accent);
+   border-radius: 4px;
+   cursor: pointer;
+}
+
+.gnode:hover,
+.gnode:focus-visible {
+   z-index: 2;
+   border-color: var(--vscode-focusBorder);
+   border-left-color: var(--accent);
+   outline: none;
+}
+
+.gnode.matched {
+   box-shadow: 0 0 0 2px var(--vscode-focusBorder);
+}
+
+.gnode-title {
+   overflow: hidden;
+   font-weight: 600;
+   text-overflow: ellipsis;
+   white-space: nowrap;
+}
+
+.gnode-sub {
+   margin-top: 2px;
+   overflow: hidden;
+   color: var(--vscode-descriptionForeground);
+   font-size: 0.9em;
+   text-overflow: ellipsis;
+   white-space: nowrap;
+}
+
+.gnode.missing .gnode-title {
+   text-decoration: line-through;
+}
+
+.gnode-reveal {
+   text-align: center;
+}
+
+.gnode-more {
+   position: absolute;
+   top: 100%;
+   right: -1px;
+   left: -4px;
+   padding: 6px 10px;
+   text-align: left;
+   background: var(--vscode-editorWidget-background);
+   border: 1px solid var(--vscode-focusBorder);
+   border-radius: 0 0 4px 4px;
+   opacity: 0;
+   pointer-events: none;
+   transform: translateY(-6px);
+   transition: opacity 0.2s ease, transform 0.22s ease;
+}
+
+.gnode-reveal:hover .gnode-more,
+.gnode-reveal:focus-visible .gnode-more {
+   opacity: 1;
+   transform: none;
+}
+
+.gnode-cover.gnode {
+   justify-content: flex-start;
+   padding: 0;
+   overflow: visible;
+   border-left-width: 1px;
+   border-left-color: var(--vscode-editorWidget-border, var(--vscode-widget-border, rgba(128, 128, 128, 0.35)));
+   border-radius: 6px;
+}
+
+.gnode-initial {
+   display: flex;
+   flex: 1;
+   align-items: center;
+   justify-content: center;
+   min-height: 0;
+   color: var(--vscode-editor-background);
+   font-size: 2.6em;
+   font-weight: 700;
+   background: linear-gradient(135deg, var(--accent), color-mix(in srgb, var(--accent) 55%, var(--vscode-editor-background)));
+   border-radius: 5px 5px 0 0;
+}
+
+.gnode-cover.gnode .gnode-title {
+   flex: none;
+   padding: 5px 8px 6px;
+   font-size: 0.95em;
+   text-align: center;
+}
+
+/* The dot a new arrow is pulled from: under the card, or beside it when arrows run sideways. */
+
+.gnode-handle {
+   position: absolute;
+   bottom: -7px;
+   left: 50%;
+   width: 12px;
+   height: 12px;
+   margin-left: -6px;
+   background: var(--vscode-focusBorder);
+   border: 2px solid var(--vscode-editor-background);
+   border-radius: 50%;
+   box-sizing: border-box;
+   cursor: crosshair;
+   opacity: 0;
+   transition: opacity 0.15s ease;
+}
+
+.graph-right .gnode-handle {
+   top: 50%;
+   right: -7px;
+   bottom: auto;
+   left: auto;
+   margin-top: -6px;
+   margin-left: 0;
+}
+
+.gnode:hover .gnode-handle,
+.gnode:focus-visible .gnode-handle {
+   opacity: 1;
+}
+
+.gnode-reveal:hover .gnode-handle {
+   z-index: 3;
+}
+
+.graph-tools {
+   position: absolute;
+   top: 10px;
+   right: 14px;
+   display: flex;
+   flex-wrap: wrap;
+   justify-content: flex-end;
+   gap: 6px;
+   padding: 6px;
+   background: color-mix(in srgb, var(--vscode-editorWidget-background) 92%, transparent);
+   border: 1px solid var(--vscode-editorWidget-border, var(--vscode-widget-border, rgba(128, 128, 128, 0.35)));
+   border-radius: 5px;
+}
+
+.graph-tools select {
+   padding: 3px 4px;
+   color: var(--vscode-dropdown-foreground);
+   background: var(--vscode-dropdown-background);
+   border: 1px solid var(--vscode-dropdown-border, transparent);
+   border-radius: 2px;
+   font: inherit;
+}
+
+.graph-hint {
+   position: absolute;
+   right: 14px;
+   bottom: 12px;
+   left: 14px;
+   max-width: 620px;
+   margin: 0 auto;
+   padding: 8px 12px;
+   color: var(--vscode-descriptionForeground);
+   text-align: center;
+   background: color-mix(in srgb, var(--vscode-editorWidget-background) 92%, transparent);
+   border: 1px solid var(--vscode-editorWidget-border, var(--vscode-widget-border, rgba(128, 128, 128, 0.35)));
+   border-radius: 5px;
+}
+
+#shelves.graph-mode > .notice {
+   margin: 48px 20px 0;
+}
+
+@media (prefers-reduced-motion: reduce) {
+   .gnode-more,
+   .gnode-handle {
+      transition: none;
+   }
+}
